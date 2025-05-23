@@ -1,0 +1,47 @@
+PODS:
+  - Capacitor (7.2.0):
+    - CapacitorCordova
+  - CapacitorBrowser (7.0.1):
+    - Capacitor
+  - CapacitorCordova (7.2.0)
+  - CapacitorInappbrowser (2.1.0):
+    - Capacitor
+    - OSInAppBrowserLib (~> 2.0)
+  - CapacitorSwipeBackPlugin (2.0.0):
+    - Capacitor
+  - OSInAppBrowserLib (2.0.0)
+
+DEPENDENCIES:
+  - "Capacitor (from `../../node_modules/@capacitor/ios`)"
+  - "CapacitorBrowser (from `../../node_modules/@capacitor/browser`)"
+  - "CapacitorCordova (from `../../node_modules/@capacitor/ios`)"
+  - "CapacitorInappbrowser (from `../../node_modules/@capacitor/inappbrowser`)"
+  - CapacitorSwipeBackPlugin (from `../../node_modules/capacitor-swipe-back-plugin`)
+
+SPEC REPOS:
+  trunk:
+    - OSInAppBrowserLib
+
+EXTERNAL SOURCES:
+  Capacitor:
+    :path: "../../node_modules/@capacitor/ios"
+  CapacitorBrowser:
+    :path: "../../node_modules/@capacitor/browser"
+  CapacitorCordova:
+    :path: "../../node_modules/@capacitor/ios"
+  CapacitorInappbrowser:
+    :path: "../../node_modules/@capacitor/inappbrowser"
+  CapacitorSwipeBackPlugin:
+    :path: "../../node_modules/capacitor-swipe-back-plugin"
+
+SPEC CHECKSUMS:
+  Capacitor: 03bc7cbdde6a629a8b910a9d7d78c3cc7ed09ea7
+  CapacitorBrowser: 6299776d496e968505464884d565992faa20444a
+  CapacitorCordova: 5967b9ba03915ef1d585469d6e31f31dc49be96f
+  CapacitorInappbrowser: b9b366f37561bf92da226df6353631ac01cc5b92
+  CapacitorSwipeBackPlugin: b294a17fbf0fb1e81f68362ef6ce878c11b0ccea
+  OSInAppBrowserLib: 232c74691cffb9959aa07b1d5ff57d96fca2af7f
+
+PODFILE CHECKSUM: 477e202338da23a34eaf296b97cef079f5c9c0e8
+
+COCOAPODS: 1.16.2
