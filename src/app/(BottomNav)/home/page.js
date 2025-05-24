@@ -8,12 +8,19 @@ import { SignOutButton } from '@/components/signout'
 import { LogOut } from 'lucide-react'
 import { fetchUserData } from '@/lib/fetchUserData'
 import { Swiper } from '@/components/ui/swiper'
+import WidgetPanel from '@/components/ui/widgetPanel'
+import { cn } from '@/lib/utils'
+import { Capacitor } from '@capacitor/core'
+import { getTimeOfDay } from '@/lib/getTimeOfDay'
 
 export default function Home() {
-  const { user, getUserData } = useAuth()
-  const router = useRouter()
-  const [userData, setUserData] = useState(null)
-  const [loading, setLoading] = useState(true)
+  const { user, getUserData } = useAuth();
+  const router = useRouter();
+  const [userData, setUserData] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const isNative = Capacitor.isNativePlatform();
+
+  const timeOfDay = getTimeOfDay();
 
   useEffect(() => {
     if (!user) {
@@ -32,6 +39,8 @@ export default function Home() {
       }
       loadUserData()
       console.log(userData)
+      console.log(user)
+      console.log(user.user_metadata.avatar_url)
     }
   }, [user, router, getUserData])
 
@@ -41,59 +50,12 @@ export default function Home() {
 
   return (
     <div className="bg-background">
-        <header className="bg-primary/40 pt-8 pb-4 px-8">
+        <header className={cn("bg-primary/40 pt-8 pb-4 px-8", isNative && "pt-18")}>
             <h1 className='text-4xl font-black text-foreground/80'>Home</h1>
+            <small>Good {timeOfDay}, Name!</small>
         </header>
         <Swiper />
-        <br/>
-        <br/>
-        <br/>
-        <br/>
-        <br/>
-        <br/>
-        <br/>
-        <br/>
-        <br/>
-        <br/>
-        <br/>
-        <br/>
-        <br/>
-        <br/>
-        <br/>
-        <br/>
-        <br/>
-        <br/>
-        <br/>
-        <br/>
-        <br/>
-        <br/>
-        <br/>
-        <br/>
-        <br/>
-        <br/>
-        <br/>
-        <br/>
-        <br/>
-        <br/>
-        <br/>
-        <br/>
-        <br/>
-        <br/>
-        <br/>
-        <br/>
-        <br/>
-        <br/>
-        <br/>
-        <br/>
-        <br/>
-        <br/>
-        <br/>
-        <br/>
-        <br/>
-        <br/>
-        <br/>
-        <br/>
-        <br/>
+        <WidgetPanel />
       {/* <Card className="max-w-md mx-auto">
         <CardHeader>
           <CardTitle className="text-3xl font-extrabold text-center">Welcome back!</CardTitle>
