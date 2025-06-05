@@ -39,7 +39,7 @@ export default function Home() {
     //   "username": null
     // }
     if(!loading){
-      if (userData.dateOfBirth === null || userData.weight === 0 || userData.height === 0 || userData.username === null){
+      if (userData.dateOfBirth === null || userData.weight === null || userData.height === null || userData.username === null){
         router.push('/setup')
       }
     }

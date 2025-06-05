@@ -4,15 +4,13 @@ import { cn } from "@/lib/utils"
 
 function Card({
   className,
-  variant,
   ...props
 }) {
   return (
     <div
       data-slot="card"
       className={cn(
-        "bg-card text-card-foreground flex flex-col gap-6 rounded-xl py-6",
-        variant === "outline shadow-sm" ? "border" : "",
+        "bg-card text-card-foreground flex flex-col gap-6 rounded-xl py-6 px-4",
         className
       )}
       {...props} />
@@ -41,7 +39,7 @@ function CardTitle({
   return (
     <div
       data-slot="card-title"
-      className={cn("leading-none font-semibold", className)}
+      className={cn("leading-none font-semibold pb-2", className)}
       {...props} />
   );
 }

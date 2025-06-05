@@ -1,10 +1,12 @@
 import * as React from "react"
 
 import { cn } from "@/lib/utils"
+import { lightHapticsImpact } from "@/lib/haptics"
 
 function Input({
   className,
   type,
+  haptics = true,
   ...props
 }) {
   return (
@@ -17,6 +19,16 @@ function Input({
         "aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive",
         className
       )}
+      onFocus={() => {
+        if (haptics) {
+          lightHapticsImpact();
+        }
+      }}
+      onBlur={() => {
+        if (haptics) {
+          lightHapticsImpact();
+        }
+      }}
       {...props} />
   );
 }

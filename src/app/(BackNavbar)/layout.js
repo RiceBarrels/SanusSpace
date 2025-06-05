@@ -5,7 +5,7 @@ export default function WithNavBarPages({children}){
     return (
         <div className="flex flex-col h-[100dvh]">
             <BackNav/>
-            <div className="flex-1">
+            <div className="flex-1 overflow-y-auto rounded-t-3xl">
                 {children}
             </div>
         </div>

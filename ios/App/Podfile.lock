@@ -1,47 +1,87 @@
 PODS:
   - Capacitor (7.2.0):
     - CapacitorCordova
+  - CapacitorApp (7.0.1):
+    - Capacitor
+  - CapacitorBarcodeScanner (2.0.3):
+    - Capacitor
+    - OSBarcodeLib (~> 1.1.3)
   - CapacitorBrowser (7.0.1):
     - Capacitor
   - CapacitorCordova (7.2.0)
+  - CapacitorHaptics (7.0.1):
+    - Capacitor
   - CapacitorInappbrowser (2.1.0):
     - Capacitor
     - OSInAppBrowserLib (~> 2.0)
+  - CapacitorKeyboard (7.0.1):
+    - Capacitor
+  - CapacitorPluginSafeArea (4.0.0):
+    - Capacitor
   - CapacitorSwipeBackPlugin (2.0.0):
     - Capacitor
+  - OSBarcodeLib (1.1.3)
   - OSInAppBrowserLib (2.0.0)
+  - PerfoodCapacitorHealthkit (1.3.2):
+    - Capacitor
 
 DEPENDENCIES:
   - "Capacitor (from `../../node_modules/@capacitor/ios`)"
+  - "CapacitorApp (from `../../node_modules/@capacitor/app`)"
+  - "CapacitorBarcodeScanner (from `../../node_modules/@capacitor/barcode-scanner`)"
   - "CapacitorBrowser (from `../../node_modules/@capacitor/browser`)"
   - "CapacitorCordova (from `../../node_modules/@capacitor/ios`)"
+  - "CapacitorHaptics (from `../../node_modules/@capacitor/haptics`)"
   - "CapacitorInappbrowser (from `../../node_modules/@capacitor/inappbrowser`)"
+  - "CapacitorKeyboard (from `../../node_modules/@capacitor/keyboard`)"
+  - CapacitorPluginSafeArea (from `../../node_modules/capacitor-plugin-safe-area`)
   - CapacitorSwipeBackPlugin (from `../../node_modules/capacitor-swipe-back-plugin`)
+  - "PerfoodCapacitorHealthkit (from `../../node_modules/@perfood/capacitor-healthkit`)"
 
 SPEC REPOS:
   trunk:
+    - OSBarcodeLib
     - OSInAppBrowserLib
 
 EXTERNAL SOURCES:
   Capacitor:
     :path: "../../node_modules/@capacitor/ios"
+  CapacitorApp:
+    :path: "../../node_modules/@capacitor/app"
+  CapacitorBarcodeScanner:
+    :path: "../../node_modules/@capacitor/barcode-scanner"
   CapacitorBrowser:
     :path: "../../node_modules/@capacitor/browser"
   CapacitorCordova:
     :path: "../../node_modules/@capacitor/ios"
+  CapacitorHaptics:
+    :path: "../../node_modules/@capacitor/haptics"
   CapacitorInappbrowser:
     :path: "../../node_modules/@capacitor/inappbrowser"
+  CapacitorKeyboard:
+    :path: "../../node_modules/@capacitor/keyboard"
+  CapacitorPluginSafeArea:
+    :path: "../../node_modules/capacitor-plugin-safe-area"
   CapacitorSwipeBackPlugin:
     :path: "../../node_modules/capacitor-swipe-back-plugin"
+  PerfoodCapacitorHealthkit:
+    :path: "../../node_modules/@perfood/capacitor-healthkit"
 
 SPEC CHECKSUMS:
   Capacitor: 03bc7cbdde6a629a8b910a9d7d78c3cc7ed09ea7
+  CapacitorApp: febecbb9582cb353aed037e18ec765141f880fe9
+  CapacitorBarcodeScanner: 29c88bf098adb0830975d4f14c107a6bb7722e3d
   CapacitorBrowser: 6299776d496e968505464884d565992faa20444a
   CapacitorCordova: 5967b9ba03915ef1d585469d6e31f31dc49be96f
+  CapacitorHaptics: 1f1e17041f435d8ead9ff2a34edd592c6aa6a8d6
   CapacitorInappbrowser: b9b366f37561bf92da226df6353631ac01cc5b92
+  CapacitorKeyboard: 09fd91dcde4f8a37313e7f11bde553ad1ed52036
+  CapacitorPluginSafeArea: 22031c3436269ca80fac90ec2c94bc7c1e59a81d
   CapacitorSwipeBackPlugin: b294a17fbf0fb1e81f68362ef6ce878c11b0ccea
+  OSBarcodeLib: f2e981270a64faf476cb790864262b29ab8cd68a
   OSInAppBrowserLib: 232c74691cffb9959aa07b1d5ff57d96fca2af7f
+  PerfoodCapacitorHealthkit: 0708728954308c0217daa6912deeb73df7cba050
 
-PODFILE CHECKSUM: 477e202338da23a34eaf296b97cef079f5c9c0e8
+PODFILE CHECKSUM: 23e20663d77420535be6fda883281962c380727c
 
 COCOAPODS: 1.16.2

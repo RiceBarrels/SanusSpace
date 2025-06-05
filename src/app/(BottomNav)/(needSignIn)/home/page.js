@@ -13,14 +13,15 @@ import { cn } from '@/lib/utils'
 import { Capacitor } from '@capacitor/core'
 import { getTimeOfDay } from '@/lib/getTimeOfDay'
 import { Skeleton } from '@/components/ui/skeleton'
+import { CapacitorHealthkit } from '@perfood/capacitor-healthkit'
 
 export default function Home() {
   const { user, getUserData } = useAuth();
   const router = useRouter();
   const [userData, setUserData] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [isHealthKitAuthorized, setIsHealthKitAuthorized] = useState(false);
   const isNative = Capacitor.isNativePlatform();
-
   const timeOfDay = getTimeOfDay();
 
   const loadUserData = async () => {
@@ -33,17 +34,44 @@ export default function Home() {
       setLoading(false)
     }
   }
+  
+  const checkHealthKitAuthorization = async () => {
+    try {
+      const isAuthorized = await CapacitorHealthkit.requestAuthorization({ 
+        all: ['calories'],
+        read: ['steps', 'stairs', 'distance', 'activity', 'calories', 'duration', 'weight', 'sleep'],
+        write:['']
+      });
+      if (isAuthorized && !isAuthorized.granted) {
+        router.push('/authorizeSystemSettings');
+      } else {
+        setIsHealthKitAuthorized(true)
+      }
+
+    } catch (error) {
+      console.error('Error checking HealthKit authorization:', error);
+      // Optionally handle the error, maybe redirect or show a message
+      router.push('/authorizeSystemSettings');
+    }
+  };
+
+  // when loading changes
+  useEffect(()=>{
+    // Check HealthKit authorization status
+
+    if(isNative && user) { // Check if on native platform and user is available
+      checkHealthKitAuthorization();
+    }
+  },[user, isNative]) // Depend on user and isNative
 
   // when user changes
   useEffect(() => {
-    if (!user) {
-      router.push('/welcome')
-    } else {
-      router.push('/home')
+    console.log('user:',user)
+    if (user){
       loadUserData()
-      // console.log(user.user_metadata.avatar_url)
     }
-  }, [user])
+    
+  }, [user, router])
 
   //when user's data fetches
   useEffect(()=>{
@@ -58,12 +86,12 @@ export default function Home() {
     //   "additional_info": [],
     //   "username": null
     // }
-    if(!loading){
+    if(!loading && userData){ // Only run check when loading is false and userData is available
       if (userData.dateOfBirth === null || userData.weight === 0 || userData.height === 0 || userData.username === null){
         router.push('/setup')
       }
     }
-  },[userData])
+  },[loading, router]) // Added router to dependencies as it's used in the effect
 
   return (
     <div className="bg-background">
@@ -72,7 +100,7 @@ export default function Home() {
             <div className='flex text-xs'>Good {timeOfDay}, {loading ? <Skeleton className="h-4 w-32" /> : `${userData.username}!`}</div>
         </header>
         <Swiper />
-        <WidgetPanel />
+        {isHealthKitAuthorized || !isNative ? <WidgetPanel /> : "loading..."}
       <Card className="max-w-md mx-auto">
         <CardHeader>
           <CardTitle className="text-3xl font-extrabold text-center">Welcome back!</CardTitle>

@@ -1,13 +1,14 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { ImageIcon, MicIcon } from "lucide-react";
+import { ArrowLeftIcon, ImageIcon, MicIcon } from "lucide-react";
 import { Button } from "./button";
 import { Textarea } from "./textarea";
 import { motion, useMotionValue, animate, AnimatePresence, useAnimationFrame } from "motion/react";
 import { cn } from "@/lib/utils";
 import {isMobile} from 'react-device-detect';
 import { Capacitor } from "@capacitor/core";
+import { lightHapticsImpact, doubleHapticsImpact, mediumHapticsImpact } from "@/lib/haptics";
 
 export function Swiper(){
 
@@ -24,7 +25,7 @@ export function Swiper(){
 
     return(
         <motion.div 
-            className={cn("bg-[#dceae2] sticky top-0 w-screen rounded-b-3xl flex flex-col items-center gap-4 z-50 touch-none", isFullscreen && "fixed", isNative && isFullscreen && "pt-10")}
+            className={cn("bg-[#dceae2] sticky top-0 w-screen rounded-b-3xl flex flex-col justify-end items-center gap-4 z-50 touch-none", isFullscreen && "fixed", isNative && isFullscreen && "pt-10")}
             style={{ height }}
             onPan={(event, info) => {
                 const newHeight = height.get() + info.delta.y;
@@ -44,10 +45,40 @@ export function Swiper(){
                     animate(height, 118, { type: "spring", stiffness: 300, damping: 30 });
                     setIsFullscreen(false);
                 }
+                doubleHapticsImpact();
+            }}
+            onTouchStart={()=>{
+                if (isNative) {
+                    lightHapticsImpact();
+                }
             }}
             layout
         >
-            <div className="flex flex-1 px-8 items-end w-screen gap-2">
+            <AnimatePresence mode="wait">
+                {isFullscreen && (
+                    <motion.div
+                        initial={{opacity: 0}}
+                        animate={{opacity: 1}}
+                        exit={{opacity: 0}}
+                        transition={{ duration: 0.5, type: "spring", stiffness: 300, damping: 30 }}
+                        className="flex-1 w-full"
+                    >
+
+                        <div className={cn("flex h-12 items-center ml-2",isNative ? "mt-2" : "")}>
+                            <Button 
+                                variant="ghost"
+                                onClick={() => {
+                                    animate(height, 118, { type: "spring", stiffness: 300, damping: 30 });
+                                    setIsFullscreen(false);
+                                }}
+                            >
+                                <ArrowLeftIcon /> Back
+                            </Button>
+                        </div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
+            <div className="flex px-8 items-end w-screen gap-2">
                 <Button variant="outline" className="bg-background/10" size="icon">
                     <ImageIcon />
                 </Button>

@@ -3,8 +3,9 @@
 import { Capacitor } from "@capacitor/core";
 import { useTransitionRouter } from "next-view-transitions";
 import Link from "next/link";
+import { doubleHapticsImpact } from "@/lib/haptics";
 
-export default function ForwardLink({href="", children, ...prop}){
+export default function ForwardLink({href="", children, haptics=true, ...prop}){
   const router = useTransitionRouter();
   const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
   const isIos = Capacitor.getPlatform() === 'ios';
@@ -14,6 +15,9 @@ export default function ForwardLink({href="", children, ...prop}){
       href={href}
       onClick={(e) => {
         e.preventDefault();
+        if(haptics){
+          doubleHapticsImpact();
+        }
         router.push(href, {
           onTransitionReady: () => pageAnimation(isSafari,isIos),
         });
@@ -41,7 +45,7 @@ function pageAnimation(isSafari,isIos){
         },
       ],
       {
-        duration: 400,
+        duration: 300,
         easing: "ease-in-out",
         fill: "forwards",
         pseudoElement: "::view-transition-old(root)",
@@ -62,7 +66,7 @@ function pageAnimation(isSafari,isIos){
         },
       ],
       {
-        duration: 400,
+        duration: 300,
         easing: "ease-in-out",
         fill: "forwards",
         pseudoElement: "::view-transition-new(root)",

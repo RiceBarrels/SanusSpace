@@ -1,5 +1,6 @@
 "use client"
 
+
 export async function fetchUserData(getUserData){
     const { data, error } = await getUserData();
     if (error) {

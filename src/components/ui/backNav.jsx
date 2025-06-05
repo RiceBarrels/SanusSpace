@@ -53,7 +53,7 @@ function pageAnimation(isSafari,isIos){
         },
       ],
       {
-        duration: 400,
+        duration: 300,
         easing: "ease-in-out",
         fill: "forwards",
         pseudoElement: "::view-transition-old(root)",
@@ -74,7 +74,7 @@ function pageAnimation(isSafari,isIos){
         },
       ],
       {
-        duration: 400,
+        duration: 300,
         easing: "ease-in-out",
         fill: "forwards",
         pseudoElement: "::view-transition-new(root)",

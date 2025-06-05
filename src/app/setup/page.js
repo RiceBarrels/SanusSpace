@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useAuth } from '@/context/AuthContext'
 import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
@@ -11,7 +11,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@/components/ui/select'
 
 export default function SetupPage() {
-    const { user } = useAuth()
+    const { user, getUserData } = useAuth()
     const router = useRouter()
     const [loading, setLoading] = useState(false)
     const [error, setError] = useState(null)
@@ -22,8 +22,24 @@ export default function SetupPage() {
         weight: '',
         height: '',
         weightUnit: 'kg',
-        heightUnit: 'cm'
+        heightUnit: 'cm',
+        biologicalSex: ''
     })
+
+    useEffect(()=>{
+        const { data: userData } = getUserData();
+        if (userData) {
+            setFormData({
+                username: userData.username || '',
+                dateOfBirth: userData.dateOfBirth || '',
+                weight: userData.weight || '',
+                height: userData.height || '',
+                weightUnit: userData.weightUnit || 'kg',
+                heightUnit: userData.heightUnit || 'cm',
+                biologicalSex: userData.biologicalSex || ''
+            })
+        }
+    },[getUserData])
 
     const questions = [
         {
@@ -38,6 +54,13 @@ export default function SetupPage() {
             label: 'Date of Birth',
             type: 'date',
             required: true
+        },
+        {
+            id: 'biologicalSex',
+            label: 'Biological Sex',
+            type: 'select',
+            required: true,
+            options: ['xy (male)', 'xx (female)']
         },
         {
             id: 'weight',
@@ -58,13 +81,13 @@ export default function SetupPage() {
     ]
 
     const handleSubmit = async (e) => {
-        e.preventDefault()
+        e?.preventDefault()
         setLoading(true)
         setError(null)
 
         try {
             // Validate form data
-            if (!formData.username || !formData.dateOfBirth || !formData.weight || !formData.height) {
+            if (!formData.username || !formData.dateOfBirth || !formData.weight || !formData.height || !formData.biologicalSex) {
                 throw new Error('Please fill in all fields')
             }
 
@@ -108,7 +131,8 @@ export default function SetupPage() {
                     username: formData.username,
                     dateOfBirth: formData.dateOfBirth,
                     weight: weightKg,
-                    height: heightCm
+                    height: heightCm,
+                    biologicalSex: formData.biologicalSex === 'xy (male)' ? 'xy' : 'xx'
                 })
                 .eq('user_id', user.id);
 
@@ -150,7 +174,7 @@ export default function SetupPage() {
     return (
         <div className="flex h-[100dvh] items-center justify-center bg-background">
             <Card className="w-full h-full max-w-md flex flex-col justify-between">
-                <CardHeader>
+                <CardHeader >
                     <CardTitle className="text-center">Complete Your Profile</CardTitle>
                     <CardDescription className="text-center">
                         Question {currentStep + 1} of {questions.length}
@@ -165,23 +189,40 @@ export default function SetupPage() {
                                     {currentQuestion.label}
                                 </Label>
                                 <div className="flex gap-2">
-                                    <Input
-                                        id={currentQuestion.id}
-                                        name={currentQuestion.id}
-                                        type={currentQuestion.type}
-                                        required={currentQuestion.required}
-                                        placeholder={currentQuestion.placeholder}
-                                        value={formData[currentQuestion.id]}
-                                        onChange={handleChange}
-                                        disabled={loading}
-                                        onKeyDown={(e) => {
-                                            if (e.key === 'Enter' && currentStep < questions.length - 1 && formData[currentQuestion.id] && !loading) {
-                                                e.preventDefault();
-                                                handleNext();
-                                            }
-                                        }}
-                                        className="flex-1"
-                                    />
+                                    {currentQuestion.type === 'select' ? (
+                                        <Select
+                                            value={formData[currentQuestion.id]}
+                                            onValueChange={(value) => handleChange({ target: { name: currentQuestion.id, value } })}
+                                            disabled={loading}
+                                        >
+                                            <SelectTrigger className="flex-1">
+                                                <SelectValue placeholder={`Select ${currentQuestion.label.toLowerCase()}`} />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                {currentQuestion.options.map(option => (
+                                                    <SelectItem key={option} value={option}>{option}</SelectItem>
+                                                ))}
+                                            </SelectContent>
+                                        </Select>
+                                    ) : (
+                                        <Input
+                                            id={currentQuestion.id}
+                                            name={currentQuestion.id}
+                                            type={currentQuestion.type}
+                                            required={currentQuestion.required}
+                                            placeholder={currentQuestion.placeholder}
+                                            value={formData[currentQuestion.id]}
+                                            onChange={handleChange}
+                                            disabled={loading}
+                                            onKeyDown={(e) => {
+                                                if (e.key === 'Enter' && currentStep < questions.length - 1 && formData[currentQuestion.id] && !loading) {
+                                                    e.preventDefault();
+                                                    handleNext();
+                                                }
+                                            }}
+                                            className="flex-1"
+                                        />
+                                    )}
                                     {currentQuestion.units && (
                                         <Select
                                             value={formData[`${currentQuestion.id}Unit`]}
@@ -206,42 +247,42 @@ export default function SetupPage() {
                                 </div>
                             )}
                         </div>
+                        
+                        <div className="flex gap-4 w-full">
+                            {currentStep > 0 && (
+                                <Button
+                                    type="button"
+                                    variant="outline"
+                                    onClick={handleBack}
+                                    className="flex-1"
+                                    disabled={loading}
+                                >
+                                    Back
+                                </Button>
+                            )}
+                            
+                            {currentStep < questions.length - 1 ? (
+                                <Button
+                                    type="button"
+                                    onClick={handleNext}
+                                    className="flex-1"
+                                    disabled={loading || !formData[currentQuestion.id]}
+                                >
+                                    Next
+                                </Button>
+                            ) : (
+                                <Button
+                                    type="submit"
+                                    className="flex-1"
+                                    disabled={loading}
+                                >
+                                    {loading ? 'Saving...' : 'Complete Setup'}
+                                </Button>
+                            )}
+                        </div>
                     </form>
                 </CardContent>
                 <CardFooter>
-                    <div className="flex gap-4 w-full">
-                        {currentStep > 0 && (
-                            <Button
-                                type="button"
-                                variant="outline"
-                                onClick={handleBack}
-                                className="flex-1"
-                                disabled={loading}
-                            >
-                                Back
-                            </Button>
-                        )}
-                        
-                        {currentStep < questions.length - 1 ? (
-                            <Button
-                                type="button"
-                                onClick={handleNext}
-                                className="flex-1"
-                                disabled={loading || !formData[currentQuestion.id]}
-                            >
-                                Next
-                            </Button>
-                        ) : (
-                            <Button
-                                type="submit"
-                                className="flex-1"
-                                onClick={handleSubmit}
-                                disabled={loading}
-                            >
-                                {loading ? 'Saving...' : 'Complete Setup'}
-                            </Button>
-                        )}
-                    </div>
                 </CardFooter>
             </Card>
         </div>
