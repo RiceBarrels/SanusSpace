@@ -7,6 +7,7 @@ import { Capacitor } from '@capacitor/core'
 import { useTransitionRouter } from "next-view-transitions";
 import { cn } from "@/lib/utils";
 import { useEffect } from "react";
+import { MobileSafeAreaTop } from "@/lib/mobileSafeArea";
 
 export function BackNav(){
     const router = useTransitionRouter();
@@ -20,7 +21,9 @@ export function BackNav(){
     })
 
     return (
-        <div className={cn("flex h-12 items-center ml-2",isNative ? "mt-10" : "")}>
+        <>
+        <MobileSafeAreaTop />
+        <div className={cn("flex h-12 items-center ml-2")}>
             <Button 
                 variant="ghost"
                 onClick={() => {
@@ -34,6 +37,7 @@ export function BackNav(){
                 <ArrowLeftIcon /> Back
             </Button>
         </div>
+        </>
     )
 }
 function pageAnimation(isSafari,isIos){

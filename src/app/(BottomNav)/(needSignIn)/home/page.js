@@ -14,6 +14,7 @@ import { Capacitor } from '@capacitor/core'
 import { getTimeOfDay } from '@/lib/getTimeOfDay'
 import { Skeleton } from '@/components/ui/skeleton'
 import { CapacitorHealthkit } from '@perfood/capacitor-healthkit'
+import { PageHeader } from '@/components/ui/pageHeader'
 
 export default function Home() {
   const { user, getUserData } = useAuth();
@@ -95,10 +96,7 @@ export default function Home() {
 
   return (
     <div className="bg-background">
-        <header className={cn("bg-primary/40 pt-8 pb-4 px-8", isNative && "pt-18")}>
-            <h1 className='text-4xl font-black text-foreground/80'>Home</h1>
-            <div className='flex text-xs'>Good {timeOfDay}, {loading ? <Skeleton className="h-4 w-32" /> : `${userData.username}!`}</div>
-        </header>
+        <PageHeader title="Home" description={<span className="flex gap-1">Good {timeOfDay}, {loading ? <Skeleton className="h-4 w-32" /> : <span className="font-semibold">{userData.username}!</span>}</span>} />
         <Swiper />
         {isHealthKitAuthorized || !isNative ? <WidgetPanel /> : "loading..."}
       <Card className="max-w-md mx-auto">

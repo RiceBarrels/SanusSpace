@@ -29,10 +29,10 @@ export default function RootLayout({ children }) {
     <ViewTransitions>
       <html lang="en">
         <body
-          className={`${geistSans.variable} ${geistMono.variable} ${pacifico.variable} antialiased text-foreground overflow-hidden`}
+          className={`${geistSans.variable} ${geistMono.variable} ${pacifico.variable} antialiased text-foreground overflow-hidden bg-gradient-to-b from-primary-lite from-40% to-background to-60%`}
         >
           <AuthProvider>
-            {children}
+              {children}
           </AuthProvider>
         </body>
       </html>

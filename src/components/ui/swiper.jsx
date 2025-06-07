@@ -9,6 +9,7 @@ import { cn } from "@/lib/utils";
 import {isMobile} from 'react-device-detect';
 import { Capacitor } from "@capacitor/core";
 import { lightHapticsImpact, doubleHapticsImpact, mediumHapticsImpact } from "@/lib/haptics";
+import { MobileSafeAreaBottom, MobileSafeAreaTop } from "@/lib/mobileSafeArea";
 
 export function Swiper(){
 
@@ -25,7 +26,7 @@ export function Swiper(){
 
     return(
         <motion.div 
-            className={cn("bg-[#dceae2] sticky top-0 w-screen rounded-b-3xl flex flex-col justify-end items-center gap-4 z-50 touch-none", isFullscreen && "fixed", isNative && isFullscreen && "pt-10")}
+            className={cn("bg-primary-lite sticky top-12 w-screen rounded-b-3xl flex flex-col justify-end items-center z-50 touch-none", isFullscreen && "fixed top-0")}
             style={{ height }}
             onPan={(event, info) => {
                 const newHeight = height.get() + info.delta.y;
@@ -54,6 +55,9 @@ export function Swiper(){
             }}
             layout
         >
+            {isFullscreen && (
+                <MobileSafeAreaTop />
+            )}
             <AnimatePresence mode="wait">
                 {isFullscreen && (
                     <motion.div
@@ -98,7 +102,7 @@ export function Swiper(){
 
             </div>
             <div 
-                className={cn("pb-2 flex flex-col items-center gap-1 cursor-pointer transition-all duration-500", isDesktop && "hover:scale-110 active:duration-200 active:scale-100")}
+                className={cn("pb-2 flex flex-col mt-4 items-center gap-1 cursor-pointer transition-all duration-500", isDesktop && "hover:scale-110 active:duration-200 active:scale-100")}
                 onClick={()=>{
                     if (isDesktop && !isFullscreen) {
                         animate(height, window.innerHeight, { type: "spring", stiffness: 300, damping: 30 });
@@ -135,6 +139,9 @@ export function Swiper(){
                     </motion.div>
                 </AnimatePresence>
             </div>
+            {isFullscreen && (
+                <MobileSafeAreaBottom />
+            )}
         </motion.div>
     )
 }
