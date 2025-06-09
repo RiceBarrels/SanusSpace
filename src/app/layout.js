@@ -3,6 +3,9 @@ import localFont from "next/font/local";
 import "./globals.css";
 import { AuthProvider } from '../context/AuthContext'
 import { ViewTransitions } from "next-view-transitions";
+import { Toaster } from "@/components/ui/sonner"
+import { ThemeProvider } from "@/components/ui/themeProvider"
+import { MobileSafeAreaTop } from "@/lib/mobileSafeArea";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -27,13 +30,21 @@ export const metadata = {
 export default function RootLayout({ children }) {
   return (
     <ViewTransitions>
-      <html lang="en">
+      <html lang="en" suppressHydrationWarning>
         <body
           className={`${geistSans.variable} ${geistMono.variable} ${pacifico.variable} antialiased text-foreground overflow-hidden bg-gradient-to-b from-primary-lite from-40% to-background to-60%`}
         >
-          <AuthProvider>
-              {children}
-          </AuthProvider>
+          <ThemeProvider
+            attribute="class"
+            defaultTheme="system"
+            enableSystem
+            disableTransitionOnChange
+          >
+            <AuthProvider>
+                {children}
+                <Toaster gap={10} position="top-center" richColors/>
+            </AuthProvider>
+          </ThemeProvider>
         </body>
       </html>
     </ViewTransitions>

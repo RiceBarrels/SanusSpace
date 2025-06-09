@@ -33,20 +33,6 @@ export const AuthProvider = ({ children }) => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setUser(session?.user ?? null)
       setLoading(false)
-      
-      // Redirect to home page when user successfully logs in
-      // Avoid redirecting when on sensitive pages like addFood to prevent interrupting scanning
-      if (session?.user && _event === 'SIGNED_IN') {
-        const currentPath = window.location.pathname;
-        const isSensitivePage = currentPath?.includes('/addFood');
-        
-        if (!isSensitivePage) {
-          console.log('User signed in, redirecting to home');
-          router.push('/');
-        } else {
-          console.log('User signed in but on sensitive page, skipping redirect');
-        }
-      }
     })
 
     // Handle deep links for Capacitor

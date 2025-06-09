@@ -46,9 +46,11 @@ export function MobileSafeAreaTop({className}) {
     
     return (
         <div 
-            className={cn("w-full", className)} 
+            className={cn("w-full flex justify-center items-center", className)} 
             style={{ height: `${safeArea.top}px` }}
-        />
+        >
+            <b className="text-[0.6rem] text-foreground/50 font-black bg-background/80 px-2 py-0.5 rounded-full">SanusSpace.</b>
+        </div>
     );
 }
 
@@ -83,4 +85,14 @@ export function MobileSafeAreaRight({className}) {
             style={{ width: `${safeArea.right}px` }}
         />
     );
+}
+
+export function MobileSafeAreaTopPx(){
+    const safeArea = useSafeArea();
+    return safeArea.top || 16;
+}
+
+export function MobileSafeAreaBottomPx(){
+    const safeArea = useSafeArea();
+    return safeArea.bottom || 0;
 }

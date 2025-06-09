@@ -10,18 +10,31 @@ import { useState } from "react";
 import { Button } from "./button";
 import ForwardLink from "./forwardLink";
 import { doubleHapticsImpact } from "@/lib/haptics";
+import { MobileSafeAreaBottomPx } from "@/lib/mobileSafeArea";
 
 export default function BottomNav(){
     const [isAddOpen, setIsOpen] = useState(false);
     const isNative = Capacitor.isNativePlatform();
     const pathname = usePathname();
+    const safeAreaBottom = MobileSafeAreaBottomPx();
 
     return (
         <>
-            <div className="h-14 w-screen"></div>
-            <div className={cn("fixed w-screen bottom-0 z-10 bg-background")}>
-                <div className={cn("border-t border-t-foreground/10 h-14 w-full px-6 flex justify-around items-center", isNative && "h-18 pb-4")}>
-                    
+            <div className={`w-screen`}
+                style={{
+                    height: `calc(3.5rem+${safeAreaBottom}px)`,
+                }}
+            />
+            <div 
+                className={cn("fixed w-screen bottom-0 z-10 bg-primary-lite/80 backdrop-blur-xl")}
+            >
+                <div 
+                    className={cn("h-14 w-full px-6 flex justify-around items-center")}
+                    style={{
+                        paddingBottom: `${safeAreaBottom}px`,
+                        height: `calc(56px + ${safeAreaBottom}px)`
+                    }}
+                >
                     <Link href="/home" onClick={()=>{
                         if (isNative) {
                             doubleHapticsImpact();
@@ -72,7 +85,10 @@ export default function BottomNav(){
                         initial={{y: 92, opacity: 0, scale: 1}}
                         animate={{y: 0, opacity: 1, scale: 1}}
                         exit={{y: 92, opacity: 0, scale: 1}}
-                        className={cn("bg-background fixed bottom-18 left-4 w-[calc(100vw-2rem)] border border-foreground/10 h-16 rounded-xl z-9 flex items-center justify-around", isNative && 'bottom-20')}
+                        className={cn("bg-background fixed left-4 w-[calc(100vw-2rem)] border border-foreground/10 h-16 rounded-xl z-9 flex items-center justify-around", isNative && 'bottom-20')}
+                        style={{
+                            bottom: `calc(4.5rem + ${safeAreaBottom}px)`
+                        }}
                     >
                         <ForwardLink href="/addFood" className="size-14 flex flex-col justify-between items-center text-xs text-foreground/80 p-1">
                             <ScanSearchIcon size="32"/>

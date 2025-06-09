@@ -15,6 +15,7 @@ import { getTimeOfDay } from '@/lib/getTimeOfDay'
 import { Skeleton } from '@/components/ui/skeleton'
 import { CapacitorHealthkit } from '@perfood/capacitor-healthkit'
 import { PageHeader } from '@/components/ui/pageHeader'
+import { usePrefetch } from '@/components/ui/contentPrefetcher'
 
 export default function Home() {
   const { user, getUserData } = useAuth();
@@ -24,6 +25,7 @@ export default function Home() {
   const [isHealthKitAuthorized, setIsHealthKitAuthorized] = useState(false);
   const isNative = Capacitor.isNativePlatform();
   const timeOfDay = getTimeOfDay();
+  const { prefetchRoute, prefetchContent } = usePrefetch();
 
   const loadUserData = async () => {
     try {
@@ -93,6 +95,40 @@ export default function Home() {
       }
     }
   },[loading, router]) // Added router to dependencies as it's used in the effect
+
+  // Prefetch likely next pages when component mounts
+  useEffect(() => {
+    // Prefetch common navigation destinations
+    const commonRoutes = ['/settings', '/summary', '/profile'];
+    commonRoutes.forEach(route => prefetchRoute(route));
+  }, [prefetchRoute]);
+
+  // Example of prefetching API content without navigation
+  useEffect(() => {
+    const prefetchApiData = async () => {
+      // This loads content but doesn't navigate to it
+      try {
+        // Example: prefetch user's health data
+        const healthData = await prefetchContent('/api/health-summary');
+        if (healthData) {
+          console.log('Prefetched health data:', healthData);
+          // You can store this in state for later use
+        }
+        
+        // Example: prefetch settings data
+        const settingsData = await prefetchContent('/api/user-settings');
+        if (settingsData) {
+          console.log('Prefetched settings data:', settingsData);
+        }
+      } catch (error) {
+        console.error('Failed to prefetch API data:', error);
+      }
+    };
+
+    if (userData && !loading) {
+      prefetchApiData();
+    }
+  }, [userData, loading, prefetchContent]);
 
   return (
     <div className="bg-background">

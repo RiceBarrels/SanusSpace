@@ -6,13 +6,13 @@ function Skeleton({
   ...props
 }) {
   return (
-    <div
+    <span
       data-slot="skeleton"
-      className={cn("bg-foreground/10 animate-pulse rounded-md text-transparent", className)}
+      className={cn("bg-foreground/10 animate-pulse rounded-md text-transparent inline-block", className)}
       {...props} 
     >
       {children}
-    </div>
+    </span>
   );
 }
 

@@ -17,10 +17,74 @@ export function IconCloud({
   const [lastMousePos, setLastMousePos] = useState({ x: 0, y: 0 });
   const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
   const [targetRotation, setTargetRotation] = useState(null);
+  const [isDarkMode, setIsDarkMode] = useState(false);
   const animationFrameRef = useRef();
   const rotationRef = useRef(rotation);
   const iconCanvasesRef = useRef([]);
   const imagesLoadedRef = useRef([]);
+
+  // Detect dark mode
+  useEffect(() => {
+    const checkDarkMode = () => {
+      // Check for dark class on html or body
+      const hasDarkClass = document.documentElement.classList.contains('dark') || 
+                          document.body.classList.contains('dark');
+      
+      // Check system preference
+      const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+      
+      setIsDarkMode(hasDarkClass || prefersDark);
+    };
+
+    checkDarkMode();
+
+    // Listen for system theme changes
+    const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+    const handleChange = () => checkDarkMode();
+    mediaQuery.addEventListener('change', handleChange);
+
+    // Listen for class changes on document
+    const observer = new MutationObserver(checkDarkMode);
+    observer.observe(document.documentElement, {
+      attributes: true,
+      attributeFilter: ['class']
+    });
+    observer.observe(document.body, {
+      attributes: true,
+      attributeFilter: ['class']
+    });
+
+    return () => {
+      mediaQuery.removeEventListener('change', handleChange);
+      observer.disconnect();
+    };
+  }, []);
+
+  // Setup high DPI canvas
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+
+    const ctx = canvas.getContext("2d");
+    const dpr = window.devicePixelRatio || 1;
+    
+    // Set actual size in memory (scaled by DPR)
+    canvas.width = 400 * dpr;
+    canvas.height = 400 * dpr;
+    
+    // Scale the canvas down using CSS
+    canvas.style.width = '400px';
+    canvas.style.height = '400px';
+    
+    // Scale the drawing context so everything draws at the correct size
+    ctx.scale(dpr, dpr);
+    
+    // Disable image smoothing for crisp rendering
+    ctx.imageSmoothingEnabled = false;
+    ctx.webkitImageSmoothingEnabled = false;
+    ctx.mozImageSmoothingEnabled = false;
+    ctx.msImageSmoothingEnabled = false;
+  }, []);
 
   // Create icon canvases once when icons/images change
   useEffect(() => {
@@ -28,36 +92,45 @@ export function IconCloud({
 
     const items = icons || images || [];
     imagesLoadedRef.current = new Array(items.length).fill(false);
+    const dpr = window.devicePixelRatio || 1;
 
     const newIconCanvases = items.map((item, index) => {
       const offscreen = document.createElement("canvas");
-      offscreen.width = 128;
-      offscreen.height = 128;
+      // Increase resolution for crisper icons
+      offscreen.width = 256 * dpr;
+      offscreen.height = 256 * dpr;
       const offCtx = offscreen.getContext("2d");
 
       if (offCtx) {
+        // Scale context for high DPI
+        offCtx.scale(dpr, dpr);
+        
+        // Disable image smoothing for crisp rendering
+        offCtx.imageSmoothingEnabled = false;
+        offCtx.webkitImageSmoothingEnabled = false;
+        offCtx.mozImageSmoothingEnabled = false;
+        offCtx.msImageSmoothingEnabled = false;
+
         if (images) {
           // Handle image URLs directly
           const img = new Image();
           img.crossOrigin = "anonymous";
           img.src = items[index];
           img.onload = () => {
-            offCtx.clearRect(0, 0, offscreen.width, offscreen.height);
-
-            // Draw the image
-            offCtx.drawImage(img, 0, 0, 128, 128);
-
+            offCtx.clearRect(0, 0, 256, 256);
+            // Draw the image at higher resolution
+            offCtx.drawImage(img, 0, 0, 256, 256);
             imagesLoadedRef.current[index] = true;
           };
         } else {
           // Handle SVG icons
-          offCtx.scale(0.8, 0.8);
           const svgString = renderToString(item);
           const img = new Image();
           img.src = "data:image/svg+xml;base64," + btoa(svgString);
           img.onload = () => {
-            offCtx.clearRect(0, 0, offscreen.width, offscreen.height);
-            offCtx.drawImage(img, 0, 0);
+            offCtx.clearRect(0, 0, 256, 256);
+            // Draw SVG at full resolution without additional scaling
+            offCtx.drawImage(img, 0, 0, 256, 256);
             imagesLoadedRef.current[index] = true;
           };
         }
@@ -103,8 +176,9 @@ export function IconCloud({
     const rect = canvasRef.current?.getBoundingClientRect();
     if (!rect || !canvasRef.current) return;
 
-    const x = e.clientX - rect.left;
-    const y = e.clientY - rect.top;
+    const dpr = window.devicePixelRatio || 1;
+    const x = (e.clientX - rect.left) * dpr;
+    const y = (e.clientY - rect.top) * dpr;
 
     const ctx = canvasRef.current.getContext("2d");
     if (!ctx) return;
@@ -119,13 +193,13 @@ export function IconCloud({
       const rotatedZ = icon.x * sinY + icon.z * cosY;
       const rotatedY = icon.y * cosX + rotatedZ * sinX;
 
-      const screenX = canvasRef.current.width / 2 + rotatedX;
-      const screenY = canvasRef.current.height / 2 + rotatedY;
+      const screenX = (canvasRef.current.width / 2) / dpr + rotatedX;
+      const screenY = (canvasRef.current.height / 2) / dpr + rotatedY;
 
       const scale = (rotatedZ + 200) / 300;
-      const radius = 20 * scale;
-      const dx = x - screenX;
-      const dy = y - screenY;
+      const radius = 20 * scale * dpr;
+      const dx = x - screenX * dpr;
+      const dy = y - screenY * dpr;
 
       if (dx * dx + dy * dy < radius * radius) {
         const targetX = -Math.atan2(icon.y, Math.sqrt(icon.x * icon.x + icon.z * icon.z));
@@ -186,10 +260,11 @@ export function IconCloud({
     if (!canvas || !ctx) return;
 
     const animate = () => {
+      const dpr = window.devicePixelRatio || 1;
       ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-      const centerX = canvas.width / 2;
-      const centerY = canvas.height / 2;
+      const centerX = 400 / 2;
+      const centerY = 400 / 2;
       const maxDistance = Math.sqrt(centerX * centerX + centerY * centerY);
       const dx = mousePos.x - centerX;
       const dy = mousePos.y - centerY;
@@ -215,8 +290,8 @@ export function IconCloud({
         }
       } else if (!isDragging) {
         rotationRef.current = {
-          x: rotationRef.current.x + (dy / canvas.height) * speed,
-          y: rotationRef.current.y + (dx / canvas.width) * speed,
+          x: rotationRef.current.x + (dy / 400) * speed,
+          y: rotationRef.current.y + (dx / 400) * speed,
         };
       }
 
@@ -234,9 +309,14 @@ export function IconCloud({
         const opacity = Math.max(0.2, Math.min(1, (rotatedZ + 150) / 200));
 
         ctx.save();
-        ctx.translate(canvas.width / 2 + rotatedX, canvas.height / 2 + rotatedY);
+        ctx.translate(centerX + rotatedX, centerY + rotatedY);
         ctx.scale(scale, scale);
         ctx.globalAlpha = opacity;
+
+        // Apply dark mode filter for icons
+        if (isDarkMode && (icons || images)) {
+          ctx.filter = 'brightness(0) invert(1)';
+        }
 
         if (icons || images) {
           // Only try to render icons/images if they exist
@@ -244,21 +324,24 @@ export function IconCloud({
             iconCanvasesRef.current[index] &&
             imagesLoadedRef.current[index]
           ) {
+            // Render at higher quality with better sizing
             ctx.drawImage(iconCanvasesRef.current[index], -20, -20, 40, 40);
           }
         } else {
           // Show numbered circles if no icons/images are provided
           ctx.beginPath();
           ctx.arc(0, 0, 20, 0, Math.PI * 2);
-          ctx.fillStyle = "#4444ff";
+          ctx.fillStyle = isDarkMode ? "#6366f1" : "#4444ff";
           ctx.fill();
-          ctx.fillStyle = "white";
+          ctx.fillStyle = isDarkMode ? "#000000" : "white";
           ctx.textAlign = "center";
           ctx.textBaseline = "middle";
           ctx.font = "16px Arial";
           ctx.fillText(`${icon.id + 1}`, 0, 0);
         }
 
+        // Reset filter
+        ctx.filter = 'none';
         ctx.restore();
       });
       animationFrameRef.current = requestAnimationFrame(animate);
@@ -271,7 +354,7 @@ export function IconCloud({
         cancelAnimationFrame(animationFrameRef.current);
       }
     };
-  }, [icons, images, iconPositions, isDragging, mousePos, targetRotation]);
+  }, [icons, images, iconPositions, isDragging, mousePos, targetRotation, isDarkMode]);
 
   return (
     <canvas

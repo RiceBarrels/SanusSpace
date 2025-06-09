@@ -3,8 +3,7 @@
 import { useState } from "react";
 import { cn } from '../../lib/utils';
 import { ChevronRight } from "lucide-react";
-import Link from "next/link";
-
+import ForwardLink from "./forwardLink";
 export function RoundedMenuSelections({title, items=[]}){
     return (
         <div className="flex flex-col gap-3 w-sm m-2">
@@ -17,15 +16,15 @@ export function RoundedMenuSelections({title, items=[]}){
                         )
                     }
                     return (
-                        <Link 
+                        <ForwardLink 
                             href={item.link || '#'} 
                             key={`${item.title || 'item'}-${index}`} 
-                            className={cn("flex items-center gap-4 rounded-md p-3.5 bg-primary/10 text-[#737373]", index === 0 && "rounded-t-2xl", index === items.length - 1 && "rounded-b-2xl")}
+                            className={cn("flex items-center gap-4 rounded-md p-3.5 bg-primary/10 text-foreground/80", index === 0 && "rounded-t-2xl", index === items.length - 1 && "rounded-b-2xl")}
                         >
                             <div className="">{item.icon}</div>
                             <span className="text-sm font-medium flex-1">{item.title}</span>
                             <ChevronRight className="size-3.5" />
-                        </Link>
+                        </ForwardLink>
                     )
                 })}
             </div>
