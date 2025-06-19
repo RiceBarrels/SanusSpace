@@ -4,6 +4,7 @@ import { Switch } from '@/components/ui/switch'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { BotIcon, SparklesIcon, ZapIcon, BrainIcon } from 'lucide-react'
+import { Card } from '@/components/ui/card'
 
 export default function AIModelsPage() {
     const [selectedModel, setSelectedModel] = useState('balanced')
@@ -60,11 +61,11 @@ export default function AIModelsPage() {
 
                 <div className="space-y-3">
                     {models.map((model) => (
-                        <div 
+                        <Card 
                             key={model.id}
-                            className={`p-4 rounded-lg border-2 cursor-pointer transition-all ${
+                            className={`p-4 cursor-pointer transition-all ${
                                 selectedModel === model.id 
-                                    ? 'border-primary bg-primary/5' 
+                                    ? 'border-primary/50 bg-primary/25' 
                                     : 'border-border hover:border-primary/50'
                             }`}
                             onClick={() => setSelectedModel(model.id)}
@@ -78,26 +79,26 @@ export default function AIModelsPage() {
                                             {model.badge}
                                         </Badge>
                                     </div>
-                                    <p className="text-sm text-foreground/70 mb-3">{model.description}</p>
-                                    <ul className="text-xs text-foreground/60 space-y-1">
+                                    <p className="text-sm text-foreground/80 mb-3">{model.description}</p>
+                                    <ul className="text-xs text-foreground/70 space-y-1">
                                         {model.features.map((feature, index) => (
                                             <li key={index}>• {feature}</li>
                                         ))}
                                     </ul>
                                 </div>
                                 <div className="mt-1">
-                                    <div className={`w-4 h-4 rounded-full border-2 ${
+                                    <div className={`w-6 h-6 rounded-full border-t border-b flex justify-center items-center ${
                                         selectedModel === model.id 
-                                            ? 'border-primary bg-primary' 
+                                            ? 'border-primary/50 bg-primary/25' 
                                             : 'border-border'
                                     }`}>
                                         {selectedModel === model.id && (
-                                            <div className="w-2 h-2 bg-white rounded-full m-0.5"></div>
+                                            <div className="w-4 h-4 bg-white rounded-full"/>
                                         )}
                                     </div>
                                 </div>
                             </div>
-                        </div>
+                        </Card>
                     ))}
                 </div>
             </div>

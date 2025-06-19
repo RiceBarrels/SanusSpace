@@ -41,6 +41,8 @@
     "clsx": "^2.1.1",
     "date-fns": "^4.1.0",
     "embla-carousel-react": "^8.6.0",
+    "feather-icons": "^4.29.2",
+    "liquid-glass-react": "^1.1.1",
     "lucide-react": "^0.512.0",
     "motion": "^12.12.1",
     "next": "15.3.2",

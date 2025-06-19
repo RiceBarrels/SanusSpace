@@ -36,10 +36,16 @@ export default function Login() {
   }
 
   return (
-    <div className="flex h-full items-center justify-center bg-background">
-      <Card className="w-full max-w-md">
-        <CardHeader>
-          <CardTitle className="text-3xl font-extrabold text-center">Sign in to your account</CardTitle>
+    <div className="flex h-full items-center justify-center bg-background p-1 pb-12">
+      <Card className="w-full max-w-md h-full flex flex-col gap-20">
+        <CardHeader className="flex flex-col gap-2 pt-10">
+          <h1 className="text-4xl font-black text-center">SanusSpace.</h1>
+          <CardTitle className="text-xl text-center">Sign in to your Account</CardTitle>
+          <CardDescription className="text-center">
+            <p className="text-sm text-foreground/80">
+              Don&apos;t have an account? <Link href="/signup" className="text-primary underline">Sign up</Link>
+            </p>
+          </CardDescription>
         </CardHeader>
         <CardContent>
           <form className="space-y-6" onSubmit={handleLogin}>

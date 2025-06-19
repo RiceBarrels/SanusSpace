@@ -11,7 +11,7 @@ import { MobileSafeAreaTop } from "@/lib/mobileSafeArea";
 import Link from "next/link";
 import { usePrefetch } from "./contentPrefetcher";
 
-export function BackNav({className}){
+export function BackNav({className, title = 'default'}){
     const router = useTransitionRouter();
     const pathname = usePathname();
     const isNative = Capacitor.isNativePlatform();
@@ -30,6 +30,12 @@ export function BackNav({className}){
     // Minimum swipe distance (in px) and edge detection threshold
     const minSwipeDistance = 50;
     const edgeThreshold = 20; // Must start within 20px of left edge
+    const titleText = title === 'default' ? 
+    pathname.split('/').pop()
+    .replaceAll('&apos;', "'")
+    .replaceAll('-', ' ')
+    .replace(/\b\w/g, char => char.toUpperCase())
+    .replaceAll("'S", "'s") : title;
     
     // Get the previous page path for prefetching
     const previousPage = pathname.split('/').slice(0, -1).join('/') || '/';
@@ -156,6 +162,13 @@ export function BackNav({className}){
             <Button 
                 variant="ghost"
                 onClick={handleNavigation}
+            >
+                <ArrowLeftIcon /> Back
+            </Button>
+            <span className="text-sm font-black flex-1 flex justify-center">{titleText}</span>
+            <Button 
+                variant="ghost"
+                className="opacity-0"
             >
                 <ArrowLeftIcon /> Back
             </Button>

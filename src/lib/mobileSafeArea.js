@@ -4,6 +4,7 @@ import { Capacitor } from "@capacitor/core";
 import { SafeArea } from "capacitor-plugin-safe-area";
 import { useEffect, useState } from "react";
 import { cn } from "./utils";
+import { Keyboard } from "@capacitor/keyboard";
 
 // Hook to get safe area insets
 export function useSafeArea() {
@@ -49,7 +50,7 @@ export function MobileSafeAreaTop({className}) {
             className={cn("w-full flex justify-center items-center", className)} 
             style={{ height: `${safeArea.top}px` }}
         >
-            <b className="text-[0.6rem] text-foreground/50 font-black bg-background/80 px-2 py-0.5 rounded-full">SanusSpace.</b>
+            {Capacitor.getPlatform() === 'ios' && <b className="text-[0.6rem] text-foreground/50 font-black bg-background/80 px-2 py-0.5 rounded-full">SanusSpace.</b>}
         </div>
     );
 }
@@ -87,6 +88,48 @@ export function MobileSafeAreaRight({className}) {
     );
 }
 
+export function KeyboardSafeArea({className}){
+    const [keyboardHeight, setKeyboardHeight] = useState(0);
+    const isNative = Capacitor.isNativePlatform();
+
+    useEffect(() => {
+        if (isNative) {
+            const keyboardWillShowListener = Keyboard.addListener('keyboardWillShow', info => {
+                console.log('keyboard will show with height:', info.keyboardHeight);
+                setKeyboardHeight(info.keyboardHeight);
+            });
+
+            const keyboardDidShowListener = Keyboard.addListener('keyboardDidShow', info => {
+                console.log('keyboard did show with height:', info.keyboardHeight);
+                setKeyboardHeight(info.keyboardHeight);
+            });
+
+            const keyboardWillHideListener = Keyboard.addListener('keyboardWillHide', () => {
+                console.log('keyboard will hide');
+                setKeyboardHeight(0);
+            });
+
+            const keyboardDidHideListener = Keyboard.addListener('keyboardDidHide', () => {
+                console.log('keyboard did hide');
+                setKeyboardHeight(0);
+            });
+
+            return () => {
+                keyboardWillShowListener.remove();
+                keyboardDidShowListener.remove();
+                keyboardWillHideListener.remove();
+                keyboardDidHideListener.remove();
+            };
+        }
+    }, [isNative]);
+    return (
+        <div 
+            className={cn("w-full", className)} 
+            style={{ height: `${keyboardHeight}px` }}
+        />
+    );
+}
+
 export function MobileSafeAreaTopPx(){
     const safeArea = useSafeArea();
     return safeArea.top || 16;
@@ -95,4 +138,41 @@ export function MobileSafeAreaTopPx(){
 export function MobileSafeAreaBottomPx(){
     const safeArea = useSafeArea();
     return safeArea.bottom || 0;
+}
+
+export function KeyboardHeightPx(){
+    const [keyboardHeight, setKeyboardHeight] = useState(0);
+    const isNative = Capacitor.isNativePlatform();
+
+    useEffect(() => {
+        if (isNative) {
+            const keyboardWillShowListener = Keyboard.addListener('keyboardWillShow', info => {
+                console.log('keyboard will show with height:', info.keyboardHeight);
+                setKeyboardHeight(info.keyboardHeight);
+            });
+
+            const keyboardDidShowListener = Keyboard.addListener('keyboardDidShow', info => {
+                console.log('keyboard did show with height:', info.keyboardHeight);
+                setKeyboardHeight(info.keyboardHeight);
+            });
+
+            const keyboardWillHideListener = Keyboard.addListener('keyboardWillHide', () => {
+                console.log('keyboard will hide');
+                setKeyboardHeight(0);
+            });
+
+            const keyboardDidHideListener = Keyboard.addListener('keyboardDidHide', () => {
+                console.log('keyboard did hide');
+                setKeyboardHeight(0);
+            });
+
+            return () => {
+                keyboardWillShowListener.remove();
+                keyboardDidShowListener.remove();
+                keyboardWillHideListener.remove();
+                keyboardDidHideListener.remove();
+            };
+        }
+    }, [isNative]);
+    return keyboardHeight;
 }

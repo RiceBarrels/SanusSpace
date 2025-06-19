@@ -149,11 +149,11 @@ export default function Widgets({variant, isEditing, className = "", onDelete, s
       if (size === "medium") {
         return (
           <div className="flex-1 flex flex-col w-full h-full">
-              <div className="h-full text-3xl font-bold text-foreground/80 flex items-end justify-start gap-0.5">
+              <div className="h-full text-3xl font-bold text-gray-950/80 flex items-end justify-start gap-0.5">
                   <span>{hours}</span>
-                  <small className="text-sm text-foreground/60 mb-1">hr</small> 
+                  <small className="text-sm text-gray-950/60 mb-1">hr</small> 
                   <span className="ml-1">{minutes}</span>
-                  <small className="text-sm text-foreground/60 mb-1">min</small>
+                  <small className="text-sm text-gray-950/60 mb-1">min</small>
               </div>
           </div>
         );
@@ -164,25 +164,25 @@ export default function Widgets({variant, isEditing, className = "", onDelete, s
         <div className="w-full h-full flex flex-col">
           <div className="flex justify-between items-center mb-2">
             <div className="flex flex-col items-center">
-              <div className="text-2xl font-bold text-foreground/80">
+              <div className="text-2xl font-bold text-gray-950/80">
                 {hours}h {minutes}m
               </div>
-              <div className="text-xs text-foreground/60 font-medium">Last Night</div>
+              <div className="text-xs text-gray-950/60 font-medium">Last Night</div>
             </div>
             
             <div className="flex flex-col items-center">
-              <div className="text-2xl font-bold text-foreground/80">
+              <div className="text-2xl font-bold text-gray-950/80">
                 7.5h
               </div>
-              <div className="text-xs text-foreground/60 font-medium">7-Day Avg</div>
+              <div className="text-xs text-gray-950/60 font-medium">7-Day Avg</div>
             </div>
           </div>
           
           {/* Sleep quality indicator */}
           <div className="flex-1 flex items-center justify-center">
             <div className="text-center">
-              <div className="text-lg font-medium text-foreground/70">Sleep Quality</div>
-              <div className="text-sm text-foreground/50">Good</div>
+              <div className="text-lg font-medium text-gray-950/70">Sleep Quality</div>
+              <div className="text-sm text-gray-950/50">Good</div>
             </div>
           </div>
         </div>
@@ -217,17 +217,17 @@ export default function Widgets({variant, isEditing, className = "", onDelete, s
         return (
           <div className="w-full h-full flex justify-around items-center">
             <div className="flex flex-col items-center">
-              <div className="text-2xl font-bold text-foreground/80">
+              <div className="text-2xl font-bold text-gray-950/80">
                 {Math.round(todaySteps).toLocaleString()}
               </div>
-              <div className="text-xs text-foreground/60 font-medium">Today</div>
+              <div className="text-xs text-gray-950/60 font-medium">Today</div>
             </div>
             
             <div className="flex flex-col items-center">
-              <div className="text-2xl font-bold text-foreground/80">
+              <div className="text-2xl font-bold text-gray-950/80">
                 {averageSteps.toLocaleString()}
               </div>
-              <div className="text-xs text-foreground/60 font-medium">7-Day Avg</div>
+              <div className="text-xs text-gray-950/60 font-medium">7-Day Avg</div>
             </div>
           </div>
         );
@@ -263,17 +263,17 @@ export default function Widgets({variant, isEditing, className = "", onDelete, s
           {/* Stats Row */}
           <div className="flex justify-around w-full items-center mb-2">
             <div className="flex flex-col items-center">
-              <div className="text-xl font-bold text-foreground/80">
+              <div className="text-xl font-bold text-gray-950/80">
                 {Math.round(todaySteps).toLocaleString()}
               </div>
-              <div className="text-xs text-foreground/60 font-medium">Today</div>
+              <div className="text-xs text-gray-950/60 font-medium">Today</div>
             </div>
             
             <div className="flex flex-col items-center">
-              <div className="text-xl font-bold text-foreground/80">
+              <div className="text-xl font-bold text-gray-950/80">
                 {averageSteps.toLocaleString()}
               </div>
-              <div className="text-xs text-foreground/60 font-medium">7-Day Avg</div>
+              <div className="text-xs text-gray-950/60 font-medium">7-Day Avg</div>
             </div>
           </div>
           
@@ -362,14 +362,14 @@ export default function Widgets({variant, isEditing, className = "", onDelete, s
         <div className="text-sm font-semibold">
           Found {count} {type} records
         </div>
-        <div className="text-xs text-foreground/70 max-h-20 overflow-y-auto">
+        <div className="text-xs text-gray-950/70 max-h-20 overflow-y-auto">
           {data.resultData.slice(0, 3).map((item, index) => (
             <div key={index} className="mb-1">
               {type === 'calories' && `${Math.round(item.value || 0)} cal | ${new Date(item.startDate).toLocaleTimeString()}`}
             </div>
           ))}
           {data.resultData.length > 3 && (
-            <div className="text-xs text-foreground/50">...and {data.resultData.length - 3} more</div>
+            <div className="text-xs text-gray-950/50">...and {data.resultData.length - 3} more</div>
           )}
         </div>
       </div>
@@ -402,9 +402,9 @@ export default function Widgets({variant, isEditing, className = "", onDelete, s
   if (variant === 1 || variant === "sleepTracker") {
     return (
         <div ref={setNodeRef} style={isEditing ? style : null } {...attributes} {...isEditing && !isHoveringClose ? listeners : null} {...props} className={cn(getSizeClasses(), "rounded-2xl", className)}>
-            <div className={cn("w-full h-full bg-background rounded-2xl shadow", isEditing && "animate-shake active:cursor-grabbing")}>
+            <div className={cn("w-full h-full bg-amber-50 rounded-2xl text-gray-950/80 shadow", isEditing && "animate-shake active:cursor-grabbing")}>
                 <div 
-                    className={cn("absolute -top-1.5 -left-1.5 size-5 flex justify-center items-center rounded-full bg-background border border-foreground/20 cursor-pointer transition-all duration-500 scale-100", (!isEditing || isDragging) && "scale-0")}
+                    className={cn("absolute -top-1.5 -left-1.5 size-5 flex justify-center items-center rounded-full bg-background/5 backdrop-blur-sm border border-foreground/20 cursor-pointer transition-all duration-500 scale-100", (!isEditing || isDragging) && "scale-0")}
                     onClick={handleDeleteClick}
                     onMouseEnter={()=>{
                         setIsHoveringClose(true)
@@ -425,7 +425,7 @@ export default function Widgets({variant, isEditing, className = "", onDelete, s
                             <FaBedPulse className="size-7 text-sleep" />
                             <h3 className="text-md font-bold text-sleep/70">Sleep Track</h3>
                         </div>
-                        <small className="flex gap-1 text-xs font-bold text-foreground/40 justify-center items-center pb-2">Detailed Report <ChevronRight className="size-4" /></small>
+                        <small className="flex gap-1 text-xs font-bold text-gray-950/40 justify-center items-center pb-2">Detailed Report <ChevronRight className="size-4" /></small>
                     </div>
                     <div className="mt-4 flex-1 flex h-full">
                         {loading ? (
@@ -446,9 +446,9 @@ export default function Widgets({variant, isEditing, className = "", onDelete, s
 
     return (
         <div ref={setNodeRef} style={isEditing ? style : null } {...attributes} {...isEditing && !isHoveringClose ? listeners : null} {...props} className={cn(getSizeClasses(), "rounded-2xl", className)}>
-            <div className={cn("w-full h-full bg-background rounded-2xl shadow", isEditing && "animate-shake active:cursor-grabbing")}>
+            <div className={cn("w-full h-full bg-amber-50 rounded-2xl text-gray-950/80 shadow", isEditing && "animate-shake active:cursor-grabbing")}>
                 <div 
-                    className={cn("absolute -top-1.5 -left-1.5 size-5 flex justify-center items-center rounded-full bg-background border border-foreground/20 cursor-pointer transition-all duration-500 scale-100", (!isEditing || isDragging) && "scale-0")}
+                    className={cn("absolute -top-1.5 -left-1.5 size-5 flex justify-center items-center rounded-full bg-background/5 backdrop-blur-sm border border-foreground/20 cursor-pointer transition-all duration-500 scale-100", (!isEditing || isDragging) && "scale-0")}
                     onClick={handleDeleteClick}
                     onMouseEnter={()=>{
                         setIsHoveringClose(true)
@@ -469,7 +469,7 @@ export default function Widgets({variant, isEditing, className = "", onDelete, s
                             <FaFire className="size-7 text-cal" />
                             <h3 className="text-md font-bold text-cal/70">Calories</h3>
                         </div>
-                        <small className="flex gap-1 text-xs font-bold text-foreground/40 justify-center items-center pb-2">Detailed Report <ChevronRight className="size-4" /></small>
+                        <small className="flex gap-1 text-xs font-bold text-gray-950/40 justify-center items-center pb-2">Detailed Report <ChevronRight className="size-4" /></small>
                     </div>
                     <div className="mt-4 flex-1 flex">
                         {loading ? (
@@ -480,15 +480,17 @@ export default function Widgets({variant, isEditing, className = "", onDelete, s
                             // Medium size: Show simple burned vs consumed
                             <div className="flex justify-around items-center w-full">
                                 <div className="flex flex-col items-center">
-                                    <div className="text-2xl font-bold text-foreground/80">
+                                    <div className="text-2xl font-bold text-gray-950/80">
                                         {Math.round(totalCaloriesSpent + bmr)}
                                     </div>
+                                    <div className="text-xs text-gray-950/60 font-medium">Burned</div>
                                 </div>
                                 
                                 <div className="flex flex-col items-center">
-                                    <div className="text-2xl font-bold text-foreground/80">
+                                    <div className="text-2xl font-bold text-gray-950/80">
                                         {Math.round(totalCaloriesSpent)}
                                     </div>
+                                    <div className="text-xs text-gray-950/60 font-medium">Consumed</div>
                                 </div>
                             </div>
                         ) : (
@@ -496,19 +498,19 @@ export default function Widgets({variant, isEditing, className = "", onDelete, s
                             <div className="flex flex-col justify-center items-center w-full h-full gap-4">
                                 <div className="flex justify-around items-center w-full">
                                     {/* Total Calories Spent */}
-                                    <div className="flex flex-col items-center bg-background/20 rounded-xl w-32 h-18 justify-center">
-                                        <div className="text-3xl font-bold text-foreground/80">
+                                    <div className="flex flex-col items-center bg-amber-50/20 rounded-xl w-32 h-18 justify-center">
+                                        <div className="text-3xl font-bold text-gray-950/80">
                                             {(Math.round((totalCaloriesSpent + bmr)*10)/10).toString().split(".")[0]}
-                                            <small className="text-sm text-foreground/80">.{(Math.round(totalCaloriesSpent*10)/10).toString().split(".")[1] || "0"}</small>
+                                            <small className="text-sm text-gray-950/80">.{(Math.round(totalCaloriesSpent*10)/10).toString().split(".")[1] || "0"}</small>
                                         </div>
                                         <MinusIcon className="size-3 stroke-[4] text-cal/70" />
                                     </div>
                                     
                                     {/* Total Calories Consumed */}
-                                    <div className="flex flex-col items-center bg-background/20 rounded-xl w-32 h-18 justify-center">
-                                        <div className="text-3xl font-bold text-foreground/80">
+                                    <div className="flex flex-col items-center bg-amber-50/20 rounded-xl w-32 h-18 justify-center">
+                                        <div className="text-3xl font-bold text-gray-950/80">
                                             {(Math.round(totalCaloriesSpent*10)/10).toString().split(".")[0]}
-                                            <small className="text-sm text-foreground/80">.{(Math.round(totalCaloriesSpent*10)/10).toString().split(".")[1] || "0"}</small>
+                                            <small className="text-sm text-gray-950/80">.{(Math.round(totalCaloriesSpent*10)/10).toString().split(".")[1] || "0"}</small>
                                         </div>
                                         <PlusIcon className="size-3 stroke-[4] text-cal/70" />
                                     </div>
@@ -516,10 +518,10 @@ export default function Widgets({variant, isEditing, className = "", onDelete, s
                                 
                                 {/* Net calories */}
                                 <div className="flex flex-col items-center">
-                                    <div className="text-lg font-bold text-foreground/60">
+                                    <div className="text-lg font-bold text-gray-950/60">
                                         Net: {Math.round(bmr)} cal
                                     </div>
-                                    <div className="text-xs text-foreground/40">Deficit Goal: 500 cal</div>
+                                    <div className="text-xs text-gray-950/40">Deficit Goal: 500 cal</div>
                                 </div>
                             </div>
                         )}
@@ -531,9 +533,9 @@ export default function Widgets({variant, isEditing, className = "", onDelete, s
   } else if (variant === 3 || variant === "stepsTracker") {
     return (
         <div ref={setNodeRef} style={isEditing ? style : null } {...attributes} {...isEditing && !isHoveringClose ? listeners : null} {...props} className={cn(getSizeClasses(), "rounded-2xl", className)}>
-            <div className={cn("w-full h-full bg-background rounded-2xl shadow", isEditing && "animate-shake active:cursor-grabbing")}>
+            <div className={cn("w-full h-full bg-amber-50 rounded-2xl text-gray-950/80 shadow", isEditing && "animate-shake active:cursor-grabbing")}>
                 <div 
-                    className={cn("absolute -top-1.5 -left-1.5 size-5 flex justify-center items-center rounded-full bg-background border border-foreground/20 cursor-pointer transition-all duration-500 scale-100", (!isEditing || isDragging) && "scale-0")}
+                    className={cn("absolute -top-1.5 -left-1.5 size-5 flex justify-center items-center rounded-full bg-background/5 backdrop-blur-sm border border-foreground/20 cursor-pointer transition-all duration-500 scale-100", (!isEditing || isDragging) && "scale-0")}
                     onClick={handleDeleteClick}
                     onMouseEnter={()=>{
                         setIsHoveringClose(true)
@@ -554,7 +556,7 @@ export default function Widgets({variant, isEditing, className = "", onDelete, s
                             <IoFootsteps className="size-7 text-step" />
                             <h3 className="text-md font-bold text-step/70">Steps</h3>
                         </div>
-                        <small className="flex gap-1 text-xs font-bold text-foreground/40 justify-center items-center pb-2">Detailed Report <ChevronRight className="size-4" /></small>
+                        <small className="flex gap-1 text-xs font-bold text-gray-950/40 justify-center items-center pb-2">Detailed Report <ChevronRight className="size-4" /></small>
                     </div>
                     <div className="mt-4 flex-1 flex">
                         {loading ? (

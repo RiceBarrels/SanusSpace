@@ -11,11 +11,9 @@ const config: CapacitorConfig = {
     },
     Keyboard: {
       resize: KeyboardResize.Body,
-      style: KeyboardStyle.Dark,
       resizeOnFullScreen: true,
     },
     Browser: {
-      presentationStyle: 'fullscreen',
     },
   },
   server: {
@@ -24,7 +22,7 @@ const config: CapacitorConfig = {
     allowNavigation: ['jsxixsqrvxqptdunnqis.supabase.co'],
     cleartext: true,
     // hostname: 'app' // for production
-    url: 'http://100.80.135.22:3000' // for testing with local server
+    url: 'http://192.168.1.108:3000' // for testing with local server
   },
 };
 

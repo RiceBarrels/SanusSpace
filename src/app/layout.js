@@ -32,7 +32,7 @@ export default function RootLayout({ children }) {
     <ViewTransitions>
       <html lang="en" suppressHydrationWarning>
         <body
-          className={`${geistSans.variable} ${geistMono.variable} ${pacifico.variable} antialiased text-foreground overflow-hidden bg-gradient-to-b from-primary-lite from-40% to-background to-60%`}
+          className={`${geistSans.variable} ${geistMono.variable} ${pacifico.variable} antialiased text-foreground overflow-hidden bg-gradient-to-b from-primary-lite/50 from-40% to-background to-60%`}
         >
           <ThemeProvider
             attribute="class"

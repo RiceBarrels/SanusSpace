@@ -7,11 +7,16 @@ import { SeparatorWithText } from "@/components/ui/separatorWithText";
 import { Separator } from "@/components/ui/separator";
 import { Progress } from "@/components/ui/progress";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
-import { ScanBarcodeIcon, Loader2, Package, AlertCircle, Plus, ChevronDown, ChevronUp, CheckCircle, Zap, Candy, Droplets, Beef, Apple, Wheat } from "lucide-react";
+import { ScanBarcodeIcon, Loader2, Package, AlertCircle, Plus, ChevronDown, ChevronUp, CheckCircle, Zap, Candy, Droplets, Beef, Apple, Wheat, SearchIcon, SearchCheck, SearchCheckIcon, XIcon, ArrowRightIcon, CornerDownLeftIcon } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/context/AuthContext";
+import { AnimatePresence, motion } from "motion/react";
 import { Drawer, DrawerTrigger, DrawerContent, DrawerHeader, DrawerTitle, DrawerDescription, DrawerFooter } from "@/components/ui/drawer";
 import Link from "next/link";
+import { Input } from "@/components/ui/input";
+import { cn } from "@/lib/utils";
+import { KeyboardHeightPx, KeyboardSafeArea, MobileSafeAreaBottom, MobileSafeAreaTop } from "@/lib/mobileSafeArea";
+import ProductInfoCard from "@/components/ProductInfoCard";
 
 export default function AddFoodPage() {
   const [scanResult, setScanResult] = useState("");
@@ -19,7 +24,11 @@ export default function AddFoodPage() {
   const [productData, setProductData] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [searchOpen, setSearchOpen] = useState(false);
+  const [searchValue, setSearchValue] = useState("");
+  const [searchFocused, setSearchFocused] = useState(false);
   const { user } = useAuth();
+  const keyboardHeight = KeyboardHeightPx();
 
   // Debug auth state changes during scanning
   useEffect(() => {
@@ -209,10 +218,14 @@ export default function AddFoodPage() {
     );
   };
 
+  const handleSearch = () => {
+    
+  };
+
   return (
     <div className="flex flex-col items-center justify-start gap-4">
       {/* Scan Card */}
-      <Card className="w-full max-w-md bg-primary/10 rounded-2xl">
+      <Card className="w-full max-w-md bg-primary/10 rounded-4xl">
         <CardHeader className="flex flex-col items-center justify-center">
           <CardTitle className="text-3xl font-bold">Add Food</CardTitle>
           <CardDescription className="text-center pt-4">
@@ -227,24 +240,38 @@ export default function AddFoodPage() {
             </p>
           </CardDescription>
         </CardHeader>
-        <CardContent className="flex flex-col items-center">
-          <div className="flex items-center justify-around w-full bg-background rounded-2xl">
-            <Button 
-              variant="ghost" 
-              onClick={handleScan} 
-              disabled={scanning || loading} 
-              className="size-16 flex flex-col items-center justify-center gap-0"
-            >
-              {scanning ? (
-                <Loader2 className="text-primary size-10 animate-spin" />
-              ) : (
-                <ScanBarcodeIcon className="text-primary size-10 bg-primary/10 p-2 rounded-lg" />
-              )}
-              <p className="text-foreground/50 text-xs">
-                {scanning ? "Scanning..." : "Barcode"}
-              </p>
-            </Button>
-          </div>
+        <CardContent className="flex flex-col items-center px-2">
+          <Card className="w-full">
+            <CardContent className="flex items-center justify-around w-full">
+              <Button 
+                variant="ghost" 
+                onClick={handleScan} 
+                disabled={scanning || loading} 
+                className="size-16 flex flex-col items-center justify-center gap-0"
+              >
+                {scanning ? (
+                  <Loader2 className="text-primary size-10 animate-spin" />
+                ) : (
+                  <ScanBarcodeIcon className="text-primary size-10 bg-primary/10 p-2 rounded-lg border-t border-b border-white/10" />
+                )}
+                <p className="text-foreground/50 text-xs">
+                  {scanning ? "Scanning..." : "Barcode"}
+                </p>
+              </Button>
+              
+              <Button 
+                variant="ghost" 
+                onClick={()=>setSearchOpen(true)} 
+                disabled={scanning || loading} 
+                className="size-16 flex flex-col items-center justify-center gap-0"
+              >
+                <SearchCheckIcon className="text-primary size-10 bg-primary/10 p-2 rounded-lg border-t border-b border-white/10" />
+                <p className="text-foreground/50 text-xs">
+                  Search
+                </p>
+              </Button>
+            </CardContent>
+          </Card>
         </CardContent>
       </Card>
 
@@ -274,319 +301,8 @@ export default function AddFoodPage() {
         </Card>
       )}
 
-      {/* Product Information */}
-      {productData && (
-        <Card className="w-full max-w-md">
-          <CardHeader>
-            <small className="text-muted-foreground">Barcode: {scanResult}</small>
-            <div className="flex items-start justify-between gap-4">
-              <div className="flex-1">
-                <CardTitle className="text-xl font-bold leading-tight">
-                  {productData.product_name || "Unknown Product"}
-                </CardTitle>
-                {productData.brands && (
-                  <p className="text-sm text-muted-foreground mt-1">
-                    {productData.brands}
-                  </p>
-                )}
-              </div>
-              {/* Nutrition Grade Display */}
-              <div className="flex flex-col items-end gap-2">
-                {productData.nutrition_grades && productData.nutrition_grades !== 'unknown' && (
-                  <Badge className={`${getNutriScoreColor(productData.nutrition_grades)} text-white font-bold text-xl px-4 py-2`}>
-                    {productData.nutrition_grades.toUpperCase()}
-                  </Badge>
-                )}
-              </div>
-            </div>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            {/* Product Image */}
-            {(productData.image_front_url || productData.image_url) && (
-              <div className="flex justify-center items-center w-full">
-                <img 
-                  src={productData.image_front_url || productData.image_url}
-                  alt={productData.product_name || "Product image"}
-                  className="w-32 h-32 object-contain rounded-lg border bg-gray-50 mx-auto"
-                  onError={(e) => {
-                    e.target.style.display = 'none';
-                  }}
-                />
-              </div>
-            )}
-
-            {/* Quantity */}
-            {productData.quantity && (
-              <div className="flex items-center gap-2">
-                <Package className="size-4 text-muted-foreground" />
-                <span className="text-sm">{productData.quantity}</span>
-              </div>
-            )}
-
-            {/* Nutrition Information */}
-            {productData.nutriments && (
-              <div className="space-y-4">
-                <div className="flex items-center gap-2">
-                  <h4 className="font-semibold text-base">Nutrition Facts</h4>
-                  <Badge variant="outline" className="text-xs">per 100g</Badge>
-                </div>
-                
-                {/* Calories - Highlighted Section */}
-                {(productData.nutriments['energy-kcal_100g'] || productData.nutriments['energy-kj_100g']) && (
-                  <Card className="bg-gradient-to-r from-primary/5 to-primary/10 border-primary/20">
-                    <CardContent className="p-4">
-                      <div className="flex justify-center items-center">
-                        <div className="text-center">
-                          <div className="flex items-baseline justify-center gap-1">
-                            <Zap className="size-5 text-primary" />
-                            {productData.nutriments['energy-kcal_100g'] && (
-                              <>
-                                <span className="text-3xl font-bold text-primary">
-                                  {Math.round(productData.nutriments['energy-kcal_100g'])}
-                                </span>
-                                <span className="text-sm text-muted-foreground">kcal</span>
-                              </>
-                            )}
-                          </div>
-                          {productData.nutriments['energy-kj_100g'] && (
-                            <div className="text-xs text-muted-foreground mt-1">
-                              {Math.round(productData.nutriments['energy-kj_100g'])} kJ
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                )}
-
-                <Separator />
-
-                {/* Macronutrients - Always Shown */}
-                <div className="space-y-4">
-                  <h5 className="font-medium text-sm text-muted-foreground uppercase tracking-wide">Macronutrients</h5>
-                  
-                  {productData.nutriments.fat_100g && (
-                    <NutritionRow 
-                      label="Total Fat" 
-                      value={Math.round(productData.nutriments.fat_100g * 10) / 10} 
-                      unit={productData.nutriments.fat_unit || 'g'} 
-                      nutrient="fat" 
-                    />
-                  )}
-                  
-                  {productData.nutriments.carbohydrates_100g && (
-                    <NutritionRow 
-                      label="Total Carbohydrates" 
-                      value={Math.round(productData.nutriments.carbohydrates_100g * 10) / 10} 
-                      unit={productData.nutriments.carbohydrates_unit || 'g'} 
-                      nutrient="carbohydrates" 
-                    />
-                  )}
-                  
-                  {productData.nutriments.proteins_100g && (
-                    <NutritionRow 
-                      label="Protein" 
-                      value={Math.round(productData.nutriments.proteins_100g * 10) / 10} 
-                      unit={productData.nutriments.proteins_unit || 'g'} 
-                      nutrient="proteins" 
-                    />
-                  )}
-                </div>
-                
-                {/* Detailed Nutrition - Accordion */}
-                <Accordion type="single" collapsible className="w-full">
-                  <AccordionItem value="detailed-nutrition">
-                    <AccordionTrigger className="text-sm font-medium">
-                      Detailed Nutrition
-                    </AccordionTrigger>
-                    <AccordionContent>
-                      <div className="space-y-4 pt-2">
-                        {productData.nutriments.sugars_100g && (
-                          <NutritionRow 
-                            label="Sugars" 
-                            value={Math.round(productData.nutriments.sugars_100g * 10) / 10} 
-                            unit={productData.nutriments.sugars_unit || 'g'} 
-                            nutrient="sugars" 
-                          />
-                        )}
-                        
-                        {productData.nutriments.fiber_100g && (
-                          <NutritionRow 
-                            label="Dietary Fiber" 
-                            value={Math.round(productData.nutriments.fiber_100g * 10) / 10} 
-                            unit={productData.nutriments.fiber_unit || 'g'} 
-                            nutrient="fiber" 
-                          />
-                        )}
-                        
-                        {productData.nutriments['saturated-fat_100g'] && (
-                          <NutritionRow 
-                            label="Saturated Fat" 
-                            value={Math.round(productData.nutriments['saturated-fat_100g'] * 10) / 10} 
-                            unit={productData.nutriments['saturated-fat_unit'] || 'g'} 
-                            nutrient="saturated-fat" 
-                          />
-                        )}
-                        
-                        {productData.nutriments['trans-fat_100g'] && (
-                          <div className="flex justify-between items-center pl-4">
-                            <span className="text-sm text-muted-foreground">Trans Fat</span>
-                            <span className="text-sm">{Math.round(productData.nutriments['trans-fat_100g'] * 10) / 10}{productData.nutriments['trans-fat_unit'] || 'g'}</span>
-                          </div>
-                        )}
-                        
-                        {productData.nutriments.sodium_100g && (
-                          <NutritionRow 
-                            label="Sodium" 
-                            value={productData.nutriments.sodium_100g} 
-                            unit={productData.nutriments.sodium_unit || 'g'} 
-                            nutrient="sodium" 
-                          />
-                        )}
-                        
-                        {productData.nutriments.salt_100g && (
-                          <NutritionRow 
-                            label="Salt" 
-                            value={Math.round(productData.nutriments.salt_100g * 10) / 10} 
-                            unit={productData.nutriments.salt_unit || 'g'} 
-                            nutrient="salt" 
-                          />
-                        )}
-                        
-                        {productData.nutriments.cholesterol_100g && (
-                          <NutritionRow 
-                            label="Cholesterol" 
-                            value={productData.nutriments.cholesterol_100g} 
-                            unit={productData.nutriments.cholesterol_unit || 'g'} 
-                            nutrient="cholesterol" 
-                          />
-                        )}
-
-                        {/* Vitamins & Minerals */}
-                        {(productData.nutriments.calcium_100g || productData.nutriments.iron_100g || productData.nutriments['vitamin-c_100g'] || productData.nutriments.potassium_100g || productData.nutriments['vitamin-a_100g'] || productData.nutriments['vitamin-b12_100g'] || productData.nutriments['vitamin-b2_100g'] || productData.nutriments['vitamin-d_100g']) && (
-                          <>
-                            <Separator />
-                            <h5 className="font-medium text-sm text-muted-foreground uppercase tracking-wide">Vitamins & Minerals</h5>
-                            
-                            {productData.nutriments.calcium_100g && (
-                              <NutritionRow 
-                                label="Calcium" 
-                                value={productData.nutriments.calcium_100g} 
-                                unit={productData.nutriments.calcium_unit || 'g'} 
-                                nutrient="calcium" 
-                              />
-                            )}
-                            
-                            {productData.nutriments.iron_100g && (
-                              <NutritionRow 
-                                label="Iron" 
-                                value={productData.nutriments.iron_100g} 
-                                unit={productData.nutriments.iron_unit || 'g'} 
-                                nutrient="iron" 
-                              />
-                            )}
-                            
-                            {productData.nutriments['vitamin-c_100g'] && (
-                              <NutritionRow 
-                                label="Vitamin C" 
-                                value={productData.nutriments['vitamin-c_100g']} 
-                                unit={productData.nutriments['vitamin-c_unit'] || 'g'} 
-                                nutrient="vitamin-c" 
-                              />
-                            )}
-                            
-                            {productData.nutriments.potassium_100g && (
-                              <NutritionRow 
-                                label="Potassium" 
-                                value={productData.nutriments.potassium_100g} 
-                                unit={productData.nutriments.potassium_unit || 'g'} 
-                                nutrient="potassium" 
-                              />
-                            )}
-                            
-                            {productData.nutriments['vitamin-a_100g'] && (
-                              <NutritionRow 
-                                label="Vitamin A" 
-                                value={productData.nutriments['vitamin-a_100g']} 
-                                unit={productData.nutriments['vitamin-a_unit'] || 'g'} 
-                                nutrient="vitamin-a" 
-                              />
-                            )}
-                            
-                            {productData.nutriments['vitamin-b12_100g'] && (
-                              <NutritionRow 
-                                label="Vitamin B12" 
-                                value={productData.nutriments['vitamin-b12_100g']} 
-                                unit={productData.nutriments['vitamin-b12_unit'] || 'g'} 
-                                nutrient="vitamin-b12" 
-                              />
-                            )}
-                            
-                            {productData.nutriments['vitamin-b2_100g'] && (
-                              <NutritionRow 
-                                label="Vitamin B2 (Riboflavin)" 
-                                value={productData.nutriments['vitamin-b2_100g']} 
-                                unit={productData.nutriments['vitamin-b2_unit'] || 'g'} 
-                                nutrient="vitamin-b2" 
-                              />
-                            )}
-                            
-                            {productData.nutriments['vitamin-d_100g'] && (
-                              <NutritionRow 
-                                label="Vitamin D" 
-                                value={productData.nutriments['vitamin-d_100g']} 
-                                unit={productData.nutriments['vitamin-d_unit'] || 'g'} 
-                                nutrient="vitamin-d" 
-                              />
-                            )}
-                          </>
-                        )}
-                      </div>
-                    </AccordionContent>
-                  </AccordionItem>
-                </Accordion>
-
-                {/* Daily Value Note */}
-                <div className="text-xs text-muted-foreground text-center pt-2 border-t">
-                  * Percent Daily Values are based on a 2,000 calorie diet
-                </div>
-              </div>
-            )}
-
-            {/* Categories */}
-            {productData.categories_tags && productData.categories_tags.length > 0 && (
-              <div className="space-y-2">
-                <h4 className="font-semibold text-sm">Categories</h4>
-                <div className="flex flex-wrap gap-1">
-                  {productData.categories_tags.slice(0, 3).map((category, index) => (
-                    <Badge key={index} variant="secondary" className="text-xs">
-                      {category.replace('en:', '').replace(/-/g, ' ').replace(/^\w/, c => c.toUpperCase())}
-                    </Badge>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* Ingredients */}
-            {productData.ingredients_text && (
-              <div className="space-y-2">
-                <h4 className="font-semibold text-sm">Ingredients</h4>
-                <p className="text-xs text-muted-foreground line-clamp-3">
-                  {productData.ingredients_text}
-                </p>
-              </div>
-            )}
-
-            {/* source */}
-            {productData.product_name && (
-              <div className="space-y-2">
-                <h4 className="font-semibold text-sm">Source:</h4>
-                <Link href={`https://world.openfoodfacts.org/api/v2/product/${scanResult}`} target="_blank" className="text-xs text-muted-foreground">openfoodfacts.org</Link>
-              </div>
-            )}
-          </CardContent>
-        </Card>
-      )}
+      {/* Product Information - Now using the separate component */}
+      <ProductInfoCard productData={productData} scanResult={scanResult} />
 
       {productData && (
         <div className="flex justify-center items-center sticky bottom-0 bg-background p-4 w-full rounded-t-3xl">
@@ -630,6 +346,94 @@ export default function AddFoodPage() {
           </CardContent>
         </Card>
       )}
+
+      {/* Search Drawer */}
+      <AnimatePresence mode="wait">
+        {searchOpen && (
+          <motion.div className="flex flex-col items-center justify-center fixed top-0 left-0 w-full h-full bg-foreground/10 z-50"
+            initial={{ opacity: 0, backdropFilter: "blur(0px)", blur: 16 }}
+            animate={{ opacity: 1, backdropFilter: "blur(8px)", blur: 0 }}
+            exit={{ opacity: 0, backdropFilter: "blur(0px)", blur: 16 }}
+            transition={{
+              type: "spring",
+              stiffness: 300,
+              damping: 20,
+              mass: 0.8,
+            }}
+          >
+            <div className="flex flex-col items-start justify-start w-full px-4 gap-4">
+              <MobileSafeAreaTop />
+              <Button variant="outline" className="h-10 rounded-full" onClick={()=>setSearchOpen(false)}>
+                <XIcon className="size-4 text-muted-foreground" /> Close
+              </Button>
+            </div>
+            <div className="flex flex-1 items-end justify-center">
+              <motion.div 
+                className="flex items-center px-2"
+                initial={{ scale: 0 }}
+                animate={{ scale: 1, width: searchValue.length > 0 ? "calc(100vw - 64px)" : "calc(100vw - 128px)" }}
+                exit={{ scale: 0 }}
+                transition={{
+                  type: "spring",
+                  stiffness: 300,
+                  damping: 20,
+                  mass: 0.8,
+                }}
+              >
+                <Input
+                  placeholder="Search"
+                  value={searchValue}
+                  onChange={(e) => setSearchValue(e.target.value)}
+                  onFocus={()=>{
+                    setSearchFocused(true);
+                  }}
+                  onBlur={()=>{
+                    setSearchFocused(false);
+                  }}
+                  className={cn("p-6 rounded-full")}
+                />
+              </motion.div>
+
+              <AnimatePresence mode="wait">
+                {searchValue.length > 0 && (
+                  <motion.div 
+                    className={cn("flex flex-col items-center justify-center")}
+                    initial={{ opacity: 0, height: 0, width: 0, x: -64 }}
+                    animate={{ opacity: 1, height: 48, width: 48, x: 0 }}
+                    exit={{ opacity: 0, height: 0, width: 0, x: -64}}
+                    transition={{
+                      type: "spring",
+                      stiffness: 300,
+                      damping: 20,
+                      mass: 0.8,
+                    }}
+                  >
+                    <Button variant="outline" className="size-10 rounded-full" onClick={()=>{
+
+                    }}>
+                      <CornerDownLeftIcon className={cn("size-4 text-muted-foreground", !searchValue.length > 0 && "rotate-180 size-0")} />
+                    </Button>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
+            <MobileSafeAreaBottom />
+            <motion.div
+              className="w-full"
+              initial={{ height: 0 }}
+              animate={{ height: keyboardHeight }}
+              exit={{ height: 0 }}
+              transition={{
+                type: "spring",
+                stiffness: 100,
+                damping: 10,
+                mass: 0.5,
+              }}
+            >
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

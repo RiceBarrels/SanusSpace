@@ -4,6 +4,7 @@ import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { PlusIcon, Trash2Icon } from 'lucide-react'
+import { Card } from '@/components/ui/card'
 
 export default function EmergencyContactPage() {
     const [contacts, setContacts] = useState([
@@ -40,7 +41,7 @@ export default function EmergencyContactPage() {
 
                 <div className="space-y-6">
                     {contacts.map((contact, index) => (
-                        <div key={contact.id} className="p-4 rounded-lg border space-y-4">
+                        <Card key={contact.id} className="p-8 space-y-2">
                             <div className="flex items-center justify-between">
                                 <h3 className="font-medium">Contact {index + 1}</h3>
                                 {contacts.length > 1 && (
@@ -105,7 +106,7 @@ export default function EmergencyContactPage() {
                                     />
                                 </div>
                             </div>
-                        </div>
+                        </Card>
                     ))}
                 </div>
 

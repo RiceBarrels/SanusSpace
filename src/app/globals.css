@@ -52,7 +52,7 @@
   --radius: 0.625rem;
   --background: #FFFDF1;
   --foreground: #27262C;
-  --card: #FFFDF1;
+  --card: #f4f8f2;
   --card-foreground: #27262C;
   --popover: #FFFDF1;
   --popover-foreground: #27262C;
@@ -90,7 +90,7 @@
 .dark {
   --background: #050707;
   --foreground: #FFFDF1;
-  --card: #27262C;
+  --card: #0e1414;
   --card-foreground: #FFFDF1;
   --popover: #738b88;
   --popover-foreground: #FFFDF1;
@@ -168,4 +168,8 @@
 ::view-transition-old(root) {
   animation: none !important;
   box-shadow: 0px 0px 8px #00000015;
+}
+
+::-webkit-scrollbar {
+  display: none;
 }

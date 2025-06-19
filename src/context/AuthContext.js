@@ -179,9 +179,7 @@ export const AuthProvider = ({ children }) => {
             try {
               await Browser.open({
                 url: data.url,
-                windowName: 'Login With Google',
-                presentationStyle: 'fullscreen',
-                toolbarColor: '#000000'
+                windowName: 'Login With Google'
               });
               console.log('OAuth browser opened successfully');
             } catch (browserError) {

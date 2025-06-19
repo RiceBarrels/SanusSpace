@@ -30,10 +30,16 @@ export default function SignUp() {
   }
 
   return (
-    <div className="flex h-full items-center justify-center bg-background">
-      <Card className="w-full max-w-md">
-        <CardHeader>
-          <CardTitle className="text-3xl font-extrabold text-center">Create your account</CardTitle>
+    <div className="flex h-full items-center justify-center bg-background p-1 pb-12">
+      <Card className="w-full max-w-md h-full flex flex-col gap-20">
+        <CardHeader className="flex flex-col gap-2 pt-10">
+          <h1 className="text-4xl font-black text-center">SanusSpace.</h1>
+          <CardTitle className="text-xl text-center">Create your Account</CardTitle>
+          <CardDescription className="text-center">
+            <p className="text-sm text-foreground/80">
+              Already have an account? <Link href="/login" className="text-primary underline">Sign in</Link>
+            </p>
+          </CardDescription>
         </CardHeader>
         <CardContent>
           <form className="space-y-6" onSubmit={handleSignUp}>

@@ -5,7 +5,6 @@ export default function WithBottomBarPages({children}){
 
     return (
         <div className="flex flex-col h-[100dvh] ">
-            <MobileSafeAreaTop className="bg-primary-lite" />
             <div id="scrollContainer" className="flex-1 overflow-y-scroll overflow-x-hidden">
                 <div className="bg-background pb-16 min-h-screen min-h-[100dvh]">
                     {children}

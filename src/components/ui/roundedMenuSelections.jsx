@@ -19,11 +19,11 @@ export function RoundedMenuSelections({title, items=[]}){
                         <ForwardLink 
                             href={item.link || '#'} 
                             key={`${item.title || 'item'}-${index}`} 
-                            className={cn("flex items-center gap-4 rounded-md p-3.5 bg-primary/10 text-foreground/80", index === 0 && "rounded-t-2xl", index === items.length - 1 && "rounded-b-2xl")}
+                            className={cn("flex items-center gap-4 rounded-md p-3.5 bg-primary/10 backdrop-blur-sm border-t border-b border-foreground/10 text-foreground/80", index === 0 && "rounded-t-2xl", index === items.length - 1 && "rounded-b-2xl", item.className, item.isCenter && "justify-center")}
                         >
                             <div className="">{item.icon}</div>
-                            <span className="text-sm font-medium flex-1">{item.title}</span>
-                            <ChevronRight className="size-3.5" />
+                            <span className={cn("text-sm font-medium", !item.isCenter && "flex-1")}>{item.title}</span>
+                            <ChevronRight className={cn("size-3.5", item.isCenter && "hidden")} />
                         </ForwardLink>
                     )
                 })}

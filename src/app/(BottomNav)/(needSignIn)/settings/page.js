@@ -1,6 +1,6 @@
 'use client'
 import { RoundedMenuSelections } from "@/components/ui/roundedMenuSelections";
-import { AlertTriangleIcon, ArrowLeftRightIcon, BellIcon, BookOpenIcon, BotIcon, CopyIcon, CookieIcon, FileQuestionIcon, FileTextIcon, GlobeIcon, HeadsetIcon, HeartIcon, HelpCircleIcon, InfoIcon, Link2Icon, ShieldIcon, UserIcon, UsersIcon, UsersRoundIcon, ZapIcon, NotebookIcon, SirenIcon, SaladIcon, HeartHandshakeIcon, AlarmCheckIcon, CheckIcon, LayoutDashboardIcon, SunMoonIcon } from "lucide-react";
+import { AlertTriangleIcon, ArrowLeftRightIcon, BellIcon, BookOpenIcon, BotIcon, CopyIcon, CookieIcon, FileQuestionIcon, FileTextIcon, GlobeIcon, HeadsetIcon, HeartIcon, HelpCircleIcon, InfoIcon, Link2Icon, ShieldIcon, UserIcon, UsersIcon, UsersRoundIcon, ZapIcon, NotebookIcon, SirenIcon, SaladIcon, HeartHandshakeIcon, AlarmCheckIcon, CheckIcon, LayoutDashboardIcon, SunMoonIcon, LogOutIcon } from "lucide-react";
 import { PageHeader } from "@/components/ui/pageHeader";
 import { useState, useEffect } from "react";
 import { useAuth } from "@/context/AuthContext";
@@ -12,7 +12,7 @@ import { Clipboard } from '@capacitor/clipboard';
 
 
 export default function SettingsPage(){
-    const { user, getUserData } = useAuth();
+    const { user, getUserData, signOut } = useAuth();
     const [userData, setUserData] = useState(null);
     const [loading, setLoading] = useState(true);
     const [copied, setCopied] = useState(false);
@@ -49,14 +49,14 @@ export default function SettingsPage(){
     }, [user])
 
     const privacyItems = [
-        { icon: <UsersRoundIcon className="size-5" />, title: "Friend&apos;s permission", link: "/settings/friends-permission" },
-        {icon: <ShieldIcon className="size-5" />, title: "Data & Authorization", link: "/settings/privacy-policy"},
+        { icon: <UsersRoundIcon className="size-5" />, title: "Friend's permission", link: "/settings/friend&apos;s-permission" },
+        {icon: <ShieldIcon className="size-5" />, title: "Data & Authorization", link: "/settings/data-&-authorization"},
         {icon: <Link2Icon className="size-5" />, title: "Linked Accounts", link: "/settings/linked-accounts"},
     ];
 
     const helpItems = [
         {icon: <HeadsetIcon className="size-5" />, title: "About SanusSpace", link: "/settings/about"},
-        {icon: <FileQuestionIcon className="size-5" />, title: "Help & Feedback", link: "/settings/help-feedback"},
+        {icon: <FileQuestionIcon className="size-5" />, title: "Help & Feedback", link: "/settings/help-&-feedback"},
     ];
 
     const termsItems = [
@@ -69,7 +69,7 @@ export default function SettingsPage(){
         {icon: <SaladIcon className="size-5" />, title: "Diary Settings", link: "/settings/diary-settings"},
         {icon: <HeartHandshakeIcon className="size-5" />, title: "Easy Mode", link: "/settings/easy-mode"},
         {icon: <GlobeIcon className="size-5" />, title: "Community Sharing", link: "/settings/community-sharing"},
-        {icon: <AlarmCheckIcon className="size-5" />, title: "Reminders & Notifications", link: "/settings/notifications"},
+        {icon: <AlarmCheckIcon className="size-5" />, title: "Reminders & Notifications", link: "/settings/reminders-&-notifications"},
     ];
 
     const personalInfoItems = [
@@ -83,10 +83,17 @@ export default function SettingsPage(){
 
     ];
 
+    const appActionsItems = [
+        {icon: <ArrowLeftRightIcon className="size-5" />, title: "Switch Account", link: "/settings/switch-account"},
+        {icon: <LogOutIcon className="size-5" />, title: "Log Out", link: "/", isCenter: true, className: "bg-destructive/10 text-destructive", onClick: () => {
+            signOut();
+        }},
+    ];
+
     return (
         <div className="flex flex-col items-center">
             <PageHeader title="Settings" description="Manage your settings and preferences" className="w-full" />
-            <div className="bg-primary-lite sticky top-12 w-screen rounded-b-3xl flex flex-col justify-end items-center z-50">
+            <div className="bg-primary-lite/50 sticky top-12 w-screen rounded-b-3xl flex flex-col justify-end items-center z-50 border-b border-foreground/10 backdrop-blur-lg">
                 <div className="flex gap-3 m-2 px-12 py-2 items-center w-full">
                     <img src={user?.user_metadata?.avatar_url || ''} alt="Profile Picture" className="w-12 h-12 rounded-full" />
                     <div className="flex flex-col py-0.5 gap-0.5 flex-1">
@@ -149,6 +156,12 @@ export default function SettingsPage(){
                     />
                     <RoundedMenuSelections 
                         items={termsItems}
+                    />
+                </div>
+                {/* App Actions */}
+                <div className="pb-12">
+                    <RoundedMenuSelections 
+                        items={appActionsItems}
                     />
                 </div>
             </div>
