@@ -6,30 +6,20 @@ import { ArrowLeftIcon } from "lucide-react";
 import { Capacitor } from '@capacitor/core'
 import { useTransitionRouter } from "next-view-transitions";
 import { cn } from "@/lib/utils";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useCallback } from "react";
 import { MobileSafeAreaTop } from "@/lib/mobileSafeArea";
-import Link from "next/link";
 import { usePrefetch } from "./contentPrefetcher";
 
 export function BackNav({className, title = 'default'}){
     const router = useTransitionRouter();
     const pathname = usePathname();
-    const isNative = Capacitor.isNativePlatform();
-    const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent) || Capacitor.getPlatform() === 'ios';
-    const isIos = Capacitor.getPlatform() === 'ios';
     const { prefetchRoute } = usePrefetch();
     
-    // Touch state for swipe detection
-    const [touchStart, setTouchStart] = useState(null);
-    const [touchEnd, setTouchEnd] = useState(null);
-    const [isSwipeInProgress, setIsSwipeInProgress] = useState(false);
-    const [swipeProgress, setSwipeProgress] = useState(0);
-    const containerRef = useRef(null);
-    const [translateXHistory, setTranslateXHistory] = useState(0);
-
-    // Minimum swipe distance (in px) and edge detection threshold
-    const minSwipeDistance = 50;
-    const edgeThreshold = 20; // Must start within 20px of left edge
+    // Refs for swipe detection and animation
+    const touchStartRef = useRef({ x: 0, y: 0 });
+    const pageElementRef = useRef(null);
+    const isSwipping = useRef(false);
+    
     const titleText = title === 'default' ? 
     pathname.split('/').pop()
     .replaceAll('&apos;', "'")
@@ -45,123 +35,144 @@ export function BackNav({className, title = 'default'}){
         prefetchRoute(previousPage);
     }, [previousPage, prefetchRoute]);
 
-    // Calculate dynamic transform based on swipe progress
-    const getPageTransform = () => {
-        if (!isSwipeInProgress || swipeProgress === 0) {
-            return 'translateX(0px) scale(1)';
+    const resetPageTransform = useCallback(() => {
+        if (pageElementRef.current) {
+            pageElementRef.current.style.transform = '';
+            pageElementRef.current.style.borderRadius = '';
+            pageElementRef.current.style.transition = '450ms ease-in-out';
+            pageElementRef.current.style.overflow = '';
         }
-        
-        // Calculate progress with resistance near the limit
-        const maxTranslate = window.innerWidth * 0.1; // 10vw maximum
-        
-        // Apply resistance curve - slows down as it approaches the limit
-        let translateX;
-        if (swipeProgress <= maxTranslate) {
-            translateX = swipeProgress;
-        } else {
-            // Add resistance for overscroll
-            const overscroll = swipeProgress - maxTranslate;
-            const resistance = Math.log(overscroll / 50 + 1) * 20; // Logarithmic resistance
-            translateX = maxTranslate + resistance;
-            setTranslateXHistory(translateX);
-        }
-        
-        return `translateX(${translateX}px)`;
-    };
+    }, []);
 
-    // Apply dynamic styles to the page
-    useEffect(() => {
-        if (typeof document !== 'undefined') {
-            const pageElement = document.getElementById('back-navbar-layout');
-            const transform = getPageTransform();
-            
-            if (isSwipeInProgress && swipeProgress > 0) {
-                pageElement.style.transform = transform;
-                pageElement.style.overflow = 'hidden';
-                pageElement.style.boxShadow = '0 0 10px 0px rgba(0, 0, 0, 0.1)';
-                pageElement.style.transition = 'none'; // Disable transition during swipe
-            } else {
-                // Reset styles when not swiping
-                pageElement.style.transform = '';
-                pageElement.style.overflow = '';
-                pageElement.style.boxShadow = '0 0 10px 0px rgba(0, 0, 0, 0.1)';
-                pageElement.style.transition = 'none';
-                // pageElement.style.transitionDelay = '10s';
-            }
+    const handleNavigation = useCallback((startState) => {
+        if (pageElementRef.current) {
+            pageElementRef.current.style.transform = 'translateX(0px) scale(1)';
         }
-    }, [isSwipeInProgress, swipeProgress]);
-
-    const handleNavigation = () => {
         router.push(previousPage, {
             onTransitionReady: () => {
-                pageAnimation(isSafari,isIos,translateXHistory)
+                pageAnimation(startState);
             }
-        })
-    };
-
-    const onTouchStart = (e) => {
-        const touchX = e.targetTouches[0].clientX;
+        });
         
-        // Only allow swipes that start from the left edge
-        if (touchX <= edgeThreshold) {
-            setTouchEnd(null);
-            setTouchStart(touchX);
-            setIsSwipeInProgress(true);
-            setSwipeProgress(0);
-        }
-    };
-
-    const onTouchMove = (e) => {
-        if (isSwipeInProgress && touchStart !== null) {
-            const currentX = e.targetTouches[0].clientX;
-            setTouchEnd(currentX);
-            
-            // Calculate and update swipe progress
-            const distance = currentX - touchStart;
-            if (distance > 0) { // Only for right swipes
-                setSwipeProgress(distance);
+        // requestAnimationFrame(() => {
+            if (pageElementRef.current && startState?.transform) {
+                pageElementRef.current.style.transform = `translateX(${startState.transform}px) scale(1)`;
             }
-        }
-    };
+        // });
+    }, [previousPage, router]);
 
-    const onTouchEnd = () => {
-        if (!touchStart || !touchEnd || !isSwipeInProgress) {
-            resetTouchState();
+    const snapBackToOriginal = useCallback(() => {
+        if (pageElementRef.current) {
+            pageElementRef.current.style.transition = '450ms ease-in-out';
+            pageElementRef.current.style.transform = 'translateX(0px) scale(1)';
+            pageElementRef.current.style.borderRadius = '0px';
+            
+            setTimeout(resetPageTransform, 0);
+        }
+    },[resetPageTransform]);
+
+    // Touch event handlers for swipe detection
+    const handleTouchStart = useCallback((e) => {
+        if (e.touches[0].clientX > 50) return;
+        
+        touchStartRef.current = {
+            x: e.touches[0].clientX,
+            y: e.touches[0].clientY
+        };
+        isSwipping.current = true;
+        
+        if (!pageElementRef.current) {
+            pageElementRef.current = document.documentElement;
+        }
+    },[]);
+
+    const handleTouchMove = useCallback((e) => {
+        if (!isSwipping.current) return;
+        
+        const currentX = e.touches[0].clientX;
+        const deltaX = currentX - touchStartRef.current.x;
+        const deltaY = e.touches[0].clientY - touchStartRef.current.y;
+        
+        if (Math.abs(deltaY) > Math.abs(deltaX)) {
+            isSwipping.current = false;
+            snapBackToOriginal();
             return;
         }
         
-        const distance = touchEnd - touchStart; // Fixed: right swipe should be positive
-        const isRightSwipe = distance > minSwipeDistance;
+        if (deltaX < 0) return;
         
-        if (isRightSwipe) {
-            handleNavigation();
+        const maxSwipeDistance = window.innerWidth * 0.8;
+        const progress = Math.min(deltaX / maxSwipeDistance, 1);
+        
+        if (pageElementRef.current) {
+            const translateX = deltaX;
+            const scale = 1 - (progress * 0.05);
+            const borderRadius = progress * 32;
+            
+            pageElementRef.current.style.transform = `translateX(${translateX}px) scale(${scale})`;
+            pageElementRef.current.style.borderRadius = `${borderRadius}px`;
+            pageElementRef.current.style.transition = 'none';
+            pageElementRef.current.style.overflow = 'hidden';
         }
         
-        resetTouchState();
-    };
+        e.preventDefault();
+    },[snapBackToOriginal]);
 
-    const resetTouchState = () => {
-        setTouchStart(null);
-        setTouchEnd(null);
-        setIsSwipeInProgress(false);
-        setSwipeProgress(0);
-    };
+    const handleTouchEnd = useCallback((e) => {
+        if (!isSwipping.current) return;
+        isSwipping.current = false;
+        
+        const touchEnd = {
+            x: e.changedTouches[0].clientX,
+            y: e.changedTouches[0].clientY
+        };
+
+        const deltaX = touchEnd.x - touchStartRef.current.x;
+        const deltaY = touchEnd.y - touchStartRef.current.y;
+
+        const minSwipeDistance = window.innerWidth * 0.3;
+        const isHorizontalSwipe = Math.abs(deltaX) > Math.abs(deltaY);
+        const isLeftToRightSwipe = deltaX > minSwipeDistance;
+
+        if (isHorizontalSwipe && isLeftToRightSwipe) {
+            if (pageElementRef.current) {
+                const startState = {
+                    transform: pageElementRef.current.style.transform,
+                    borderRadius: pageElementRef.current.style.borderRadius
+                };
+                handleNavigation(startState);
+            } else {
+                handleNavigation();
+            }
+        } else {
+            snapBackToOriginal();
+        }
+    }, [handleNavigation, snapBackToOriginal]);
+
+    // Add touch event listeners to the document
+    useEffect(() => {
+        const options = { passive: false };
+        document.addEventListener('touchstart', handleTouchStart, options);
+        document.addEventListener('touchmove', handleTouchMove, options);
+        document.addEventListener('touchend', handleTouchEnd, options);
+
+        return () => {
+            document.removeEventListener('touchstart', handleTouchStart);
+            document.removeEventListener('touchmove', handleTouchMove);
+            document.removeEventListener('touchend', handleTouchEnd);
+            resetPageTransform();
+        };
+    }, [handleTouchStart, handleTouchMove, handleTouchEnd, resetPageTransform]);
 
     return (
         <>
         <MobileSafeAreaTop />
-        <div className="bg-transparent top-0 left-0 w-5 h-screen fixed z-[999999]"
-            onTouchStart={onTouchStart}
-            onTouchMove={onTouchMove}
-            onTouchEnd={onTouchEnd}
-        />
         <div 
-            ref={containerRef}
             className={cn("flex h-12 items-center ml-2", className)}
         >
             <Button 
                 variant="ghost"
-                onClick={handleNavigation}
+                onClick={()=>handleNavigation()}
             >
                 <ArrowLeftIcon /> Back
             </Button>
@@ -177,51 +188,57 @@ export function BackNav({className, title = 'default'}){
     )
 }
 
-function pageAnimation(isSafari,isIos,preX){
-    document.documentElement.animate(
-      [
+function pageAnimation(startState = null){
+    const oldViewAnimationDef = [
         {
             zIndex: 2,
             opacity: 1,
-            transform: `translateX(${preX}px)`,
-            borderRadius: 32,
-            transition: 'none',
-            transitionDelay: '0s',
+            transform: startState ? startState.transform : "translateX(0px)",
+            borderRadius: "32px",
         },
         {
             zIndex: 2,
-            opacity: 0.5,
+            opacity: 1,
             transform: "translateX(100%)",
-            borderRadius: 0,
-            transition: 'none',
-            transitionDelay: '0s',
+            borderRadius: "32px",
         },
-      ],
+      ];
+
+    const oldAnimation = document.documentElement.animate(
+      oldViewAnimationDef,
       {
-        duration: 300,
+        duration: 450,
         easing: "ease-in-out",
         fill: "forwards",
         pseudoElement: "::view-transition-old(root)",
       }
     );
   
+    oldAnimation.onfinish = () => {
+        const pageElement = document.documentElement;
+        pageElement.style.transform = '';
+        pageElement.style.borderRadius = '';
+        pageElement.style.overflow = '';
+        pageElement.style.transition = '';
+    };
+
     document.documentElement.animate(
       [
         {
             zIndex: 1,
-            transform: `translate(${isSafari || isIos ? -100+12 : -100}px,${isSafari || isIos ? 12 : 0}px) scale(0.9)`,
-            borderRadius: 0,
+            transform: `translate(-100px,0px) scale(0.9)`,
+            borderRadius: "0px",
             opacity: 0,
         },
         {
             zIndex: 1,
-            transform: `translate(${isSafari || isIos ? 12 : 0}px,${isSafari || isIos ? 12 : 0}px) scale(1)`,
-            borderRadius: 32,
+            transform: `translate(0px,0px) scale(1)`,
+            borderRadius: "32px",
             opacity: 1,
         },
       ],
       {
-        duration: 300,
+        duration: 450,
         easing: "ease-in-out",
         fill: "forwards",
         pseudoElement: "::view-transition-new(root)",

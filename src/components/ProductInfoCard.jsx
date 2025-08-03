@@ -6,8 +6,9 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/
 import { Separator } from "@/components/ui/separator";
 import { Package, Zap } from "lucide-react";
 import Link from "next/link";
+import { cn } from "@/lib/utils";
 
-export default function ProductInfoCard({ productData, scanResult }) {
+export default function ProductInfoCard({ productData, scanResult, bmr }) {
   const getNutriScoreColor = (grade) => {
     const colors = {
       'a': 'bg-green-500',
@@ -63,7 +64,7 @@ export default function ProductInfoCard({ productData, scanResult }) {
       }
     }
 
-    const percentage = (adjustedValue / dailyValue.amount) * 100;
+    const percentage = ((adjustedValue / dailyValue.amount) * 100) * (bmr / 2000);
     return Math.round(percentage * 100) / 100;
   };
 
@@ -95,7 +96,7 @@ export default function ProductInfoCard({ productData, scanResult }) {
         <div className="flex justify-between items-center">
           <span className="text-sm font-medium">{label}</span>
           <div className="text-right">
-            <span className="text-sm font-semibold">{displayValue}{displayUnit}</span>
+            <span className="text-sm font-semibold">{displayValue} {displayUnit}</span>
             {dailyValue && (
               <div className="text-xs text-muted-foreground">
                 {dailyValue}% DV
@@ -103,7 +104,7 @@ export default function ProductInfoCard({ productData, scanResult }) {
             )}
           </div>
         </div>
-        {showProgress && dailyValue && (
+        {showProgress && (
           <Progress 
             value={Math.min(dailyValue, 100)} 
             className="h-1.5"
@@ -134,6 +135,16 @@ export default function ProductInfoCard({ productData, scanResult }) {
           </div>
           {/* Nutrition Grade Display */}
           <div className="flex flex-col items-end gap-2">
+            {/* Data source indicator */}
+            <Badge 
+              variant="outline" 
+              className={cn(
+                "text-xs px-2 py-1",
+                productData.dataSource === 'usda' ? "bg-blue-50 text-blue-700 border-blue-200" : "bg-green-50 text-green-700 border-green-200"
+              )}
+            >
+              {productData.dataSource === 'usda' ? '🇺🇸 USDA' : '🌍 OpenFoodFacts'}
+            </Badge>
             {productData.nutrition_grades && productData.nutrition_grades !== 'unknown' && (
               <Badge className={`${getNutriScoreColor(productData.nutrition_grades)} text-white font-bold text-xl px-4 py-2`}>
                 {productData.nutrition_grades.toUpperCase()}
@@ -390,7 +401,7 @@ export default function ProductInfoCard({ productData, scanResult }) {
 
             {/* Daily Value Note */}
             <div className="text-xs text-muted-foreground text-center pt-2 border-t">
-              * Percent Daily Values are based on a 2,000 calorie diet
+              * Percent Daily Values are based on a {bmr} calorie diet
             </div>
           </div>
         )}
@@ -423,7 +434,21 @@ export default function ProductInfoCard({ productData, scanResult }) {
         {productData.product_name && (
           <div className="space-y-2">
             <h4 className="font-semibold text-sm">Source:</h4>
-            <Link href={`https://world.openfoodfacts.org/api/v2/product/${scanResult}`} target="_blank" className="text-xs text-muted-foreground">openfoodfacts.org</Link>
+            {productData.dataSource === 'usda' ? (
+              <Link href={`https://fdc.nal.usda.gov/fdc-app.html#/food-details/${productData.fdcId}/nutrients`} target="_blank" className="text-xs text-muted-foreground">
+                <Badge variant="outline" className="text-xs underline px-3">
+                  <div className="w-3 h-3 bg-blue-600 rounded-sm mr-1" />
+                  USDA Food Data Central
+                </Badge>
+              </Link>
+            ) : (
+              <Link href={`https://world.openfoodfacts.org/api/v2/product/${scanResult}`} target="_blank" className="text-xs text-muted-foreground">
+                <Badge variant="outline" className="text-xs underline px-3">
+                  <img src="/openfoodfacts.png" alt="Open Food Facts" className="w-3 h-3 bg-white rounded-sm mr-1" />
+                  openfoodfacts.org
+                </Badge>
+              </Link>
+            )}
           </div>
         )}
       </CardContent>

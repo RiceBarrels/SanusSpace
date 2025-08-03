@@ -3,20 +3,21 @@ import { useState, useEffect } from "react";
 import { CapacitorBarcodeScanner } from '@capacitor/barcode-scanner';
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
-import { SeparatorWithText } from "@/components/ui/separatorWithText";
-import { Separator } from "@/components/ui/separator";
-import { Progress } from "@/components/ui/progress";
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
-import { ScanBarcodeIcon, Loader2, Package, AlertCircle, Plus, ChevronDown, ChevronUp, CheckCircle, Zap, Candy, Droplets, Beef, Apple, Wheat, SearchIcon, SearchCheck, SearchCheckIcon, XIcon, ArrowRightIcon, CornerDownLeftIcon } from "lucide-react";
+import { ScanBarcodeIcon, Loader2, Package, AlertCircle, Plus, SearchIcon, SearchCheckIcon, XIcon, ArrowRightIcon, CornerDownLeftIcon, CheckIcon } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/context/AuthContext";
 import { AnimatePresence, motion } from "motion/react";
 import { Drawer, DrawerTrigger, DrawerContent, DrawerHeader, DrawerTitle, DrawerDescription, DrawerFooter } from "@/components/ui/drawer";
-import Link from "next/link";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
-import { KeyboardHeightPx, KeyboardSafeArea, MobileSafeAreaBottom, MobileSafeAreaTop } from "@/lib/mobileSafeArea";
+import { KeyboardHeightPx, MobileSafeAreaBottom, MobileSafeAreaTop } from "@/lib/mobileSafeArea";
 import ProductInfoCard from "@/components/ProductInfoCard";
+import { mediumHapticsImpact } from "@/lib/haptics";
+import { getUserBMR } from "@/lib/healthFormulas";
+import { SeparatorWithText } from "@/components/ui/separatorWithText";
+import { supabase } from "@/lib/supabase";
+import { toast } from "sonner";
 
 export default function AddFoodPage() {
   const [scanResult, setScanResult] = useState("");
@@ -27,8 +28,42 @@ export default function AddFoodPage() {
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchValue, setSearchValue] = useState("");
   const [searchFocused, setSearchFocused] = useState(false);
-  const { user } = useAuth();
+  const [searchResults, setSearchResults] = useState([]);
+  const [searchLoading, setSearchLoading] = useState(false);
+  const [lastSearchKeyword, setLastSearchKeyword] = useState(null);
+  const [userData, setUserData] = useState(null);
+  const [gramsAmount, setGramsAmount] = useState("");
+  const [addingToInventory, setAddingToInventory] = useState(false);
+  const [drawerOpen, setDrawerOpen] = useState(false);
+  const { user, getUserData } = useAuth();
   const keyboardHeight = KeyboardHeightPx();
+
+  // Fetch user data on component mount
+  useEffect(() => {
+    const fetchUserData = async () => {
+      try {
+        const { data, error } = await getUserData();
+        if (error) {
+          console.error('Error fetching user data:', error);
+          return;
+        }
+        setUserData(data);
+      } catch (error) {
+        console.error('Error fetching user data:', error);
+      }
+    };
+
+    if (user) {
+      fetchUserData();
+    }
+  }, [user, getUserData]);
+
+  // search when is not loading haptics
+  useEffect(() => {
+    if (!searchLoading) {
+      mediumHapticsImpact();
+    }
+  }, [searchLoading]);
 
   // Debug auth state changes during scanning
   useEffect(() => {
@@ -67,6 +102,8 @@ export default function AddFoodPage() {
       if (data.status === 1 && data.product) {
         setProductData(data.product);
         setError(null);
+        setGramsAmount(""); // Reset grams input for new product
+        setDrawerOpen(false); // Close drawer for new product
       } else {
         setProductData(null);
         setError("Product not found in Open Food Facts database");
@@ -77,6 +114,133 @@ export default function AddFoodPage() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const searchProducts = async (query) => {
+    if (!query.trim()) {
+      setSearchResults([]);
+      return;
+    }
+
+    setSearchLoading(true);
+    try {
+      // Search both OpenFoodFacts and USDA API in parallel
+      const [openFoodFactsResponse, usdaResponse] = await Promise.all([
+        fetch(`https://world.openfoodfacts.org/cgi/search.pl?search_terms=${encodeURIComponent(query)}&search_simple=1&action=process&json=1&page_size=10&fields=code,product_name,brands,image_front_url,nutrition_grades,nutriments`),
+        fetch(`https://api.nal.usda.gov/fdc/v1/foods/search?query=${encodeURIComponent(query)}&dataType=Foundation&api_key=mX7pvLXL9fZiG4ytPCzkVIXsLW0k5IQTPGRz84C7&pageSize=10`)
+      ]);
+      
+      const openFoodFactsData = await openFoodFactsResponse.json();
+      const usdaData = await usdaResponse.json();
+      
+      let results = [];
+      
+      // Add USDA results first (normalized to match OpenFoodFacts structure)
+      if (usdaData.foods) {
+        const normalizedUsdaProducts = usdaData.foods.map(food => normalizeUsdaFood(food));
+        results = [...results, ...normalizedUsdaProducts];
+      }
+      
+      // Add OpenFoodFacts results
+      if (openFoodFactsData.products) {
+        results = [...results, ...openFoodFactsData.products.map(product => ({
+          ...product,
+          dataSource: 'openfoodfacts'
+        }))];
+      }
+      
+      setSearchResults(results);
+    } catch (err) {
+      console.error('Search error:', err);
+      setSearchResults([]);
+    } finally {
+      setSearchLoading(false);
+    }
+  };
+
+  // Function to normalize USDA food data to match OpenFoodFacts structure
+  const normalizeUsdaFood = (usdaFood) => {
+    const nutriments = {};
+    
+    // Map USDA nutrients to OpenFoodFacts format
+    usdaFood.foodNutrients.forEach(nutrient => {
+      const name = nutrient.nutrientName.toLowerCase();
+      const value = nutrient.value;
+      const unit = nutrient.unitName.toLowerCase();
+      
+             // Map common nutrients  
+       if (name.includes('energy') && unit === 'kcal') {
+         nutriments['energy-kcal_100g'] = value;
+       } else if (name.includes('energy') && unit === 'kj') {
+         nutriments['energy-kj_100g'] = value;
+      } else if (name === 'protein') {
+        nutriments.proteins_100g = value;
+        nutriments.proteins_unit = unit;
+      } else if (name === 'total lipid (fat)') {
+        nutriments.fat_100g = value;  
+        nutriments.fat_unit = unit;
+      } else if (name === 'carbohydrate, by difference') {
+        nutriments.carbohydrates_100g = value;
+        nutriments.carbohydrates_unit = unit;
+      } else if (name === 'total sugars' || name === 'sugars, total') {
+        nutriments.sugars_100g = value;
+        nutriments.sugars_unit = unit;
+      } else if (name === 'fiber, total dietary') {
+        nutriments.fiber_100g = value;
+        nutriments.fiber_unit = unit;
+      } else if (name === 'sodium, na') {
+        // Convert mg to g for consistency with OpenFoodFacts
+        nutriments.sodium_100g = unit === 'mg' ? value / 1000 : value;
+        nutriments.sodium_unit = 'g';
+      } else if (name === 'calcium, ca') {
+        nutriments.calcium_100g = unit === 'mg' ? value / 1000 : value;
+        nutriments.calcium_unit = 'g';
+      } else if (name === 'iron, fe') {
+        nutriments.iron_100g = unit === 'mg' ? value / 1000 : value;
+        nutriments.iron_unit = 'g';
+      } else if (name === 'potassium, k') {
+        nutriments.potassium_100g = unit === 'mg' ? value / 1000 : value;
+        nutriments.potassium_unit = 'g';
+      } else if (name === 'vitamin c' || name.includes('ascorbic')) {
+        nutriments['vitamin-c_100g'] = unit === 'mg' ? value / 1000 : value;
+        nutriments['vitamin-c_unit'] = 'g';
+      } else if (name === 'thiamin') {
+        nutriments['vitamin-b1_100g'] = unit === 'mg' ? value / 1000 : value;
+        nutriments['vitamin-b1_unit'] = 'g';
+      } else if (name === 'riboflavin') {
+        nutriments['vitamin-b2_100g'] = unit === 'mg' ? value / 1000 : value;
+        nutriments['vitamin-b2_unit'] = 'g';
+      } else if (name === 'vitamin b-6') {
+        nutriments['vitamin-b6_100g'] = unit === 'mg' ? value / 1000 : value;
+        nutriments['vitamin-b6_unit'] = 'g';
+      }
+    });
+
+    return {
+      code: `usda_${usdaFood.fdcId}`,
+      product_name: usdaFood.description,
+      brands: usdaFood.brandName || (usdaFood.foodCategory ? `USDA - ${usdaFood.foodCategory}` : 'USDA Database'),
+      nutriments,
+      dataSource: 'usda',
+      fdcId: usdaFood.fdcId,
+      categories_tags: usdaFood.foodCategory ? [`en:${usdaFood.foodCategory.toLowerCase().replace(/\s+/g, '-')}`] : []
+    };
+  };
+
+  const handleSearch = async () => {
+    setLastSearchKeyword(searchValue);
+    await searchProducts(searchValue);
+  };
+
+  const selectProduct = async (product) => {
+    setSearchOpen(false);
+    setSearchValue("");
+    setSearchResults([]);
+    setScanResult(product.code);
+    setProductData(product);
+    setGramsAmount(""); // Reset grams input for new product
+    setDrawerOpen(false); // Close drawer for new product
+    mediumHapticsImpact();
   };
 
   const handleScan = async () => {
@@ -113,113 +277,88 @@ export default function AddFoodPage() {
     }
   };
 
-  const getNutriScoreColor = (grade) => {
-    const colors = {
-      'a': 'bg-green-500',
-      'b': 'bg-lime-500', 
-      'c': 'bg-yellow-500',
-      'd': 'bg-orange-500',
-      'e': 'bg-red-500'
-    };
-    return colors[grade?.toLowerCase()] || 'bg-gray-500';
-  };
+  const addToMyDiet = async () => {
+    if (!user || !productData || !gramsAmount || parseFloat(gramsAmount) <= 0) {
+      toast.error("Please enter a valid amount in grams");
+      return;
+    }
 
-  // Daily Value calculations based on FDA daily values
-  const getDailyValue = (nutrient, value, unit) => {
-    const dailyValues = {
-      fat: { amount: 65, unit: 'g' },
-      'saturated-fat': { amount: 20, unit: 'g' },
-      cholesterol: { amount: 300, unit: 'mg' },
-      sodium: { amount: 2300, unit: 'mg' },
-      carbohydrates: { amount: 300, unit: 'g' },
-      fiber: { amount: 25, unit: 'g' },
-      protein: { amount: 50, unit: 'g' },
-      proteins: { amount: 50, unit: 'g' }, // alias for protein
-      sugars: { amount: 50, unit: 'g' }, // FDA daily value for added sugars
-      sugar: { amount: 50, unit: 'g' }, // alias for sugars
-      calcium: { amount: 1000, unit: 'mg' },
-      iron: { amount: 18, unit: 'mg' },
-      'vitamin-c': { amount: 60, unit: 'mg' },
-      potassium: { amount: 3500, unit: 'mg' },
-      salt: { amount: 6, unit: 'g' }, // WHO recommendation
-      'vitamin-a': { amount: 900, unit: 'µg' },
-      'vitamin-b12': { amount: 2.4, unit: 'µg' },
-      'vitamin-b2': { amount: 1.3, unit: 'mg' },
-      'vitamin-d': { amount: 20, unit: 'µg' }
-    };
+    setAddingToInventory(true);
+    
+    try {
+      // Get current user data first
+      const { data: currentUserData, error: fetchError } = await supabase
+        .from('userdatas')
+        .select('foodConsumes')
+        .eq('user_id', user.id)
+        .single();
 
-    if (!dailyValues[nutrient] || !value) return null;
-
-    const dailyValue = dailyValues[nutrient];
-    let adjustedValue = value;
-
-    // Convert units if necessary
-    if (unit !== dailyValue.unit) {
-      if (unit === 'g' && dailyValue.unit === 'mg') {
-        adjustedValue = value * 1000; // Convert g to mg
-      } else if (unit === 'mg' && dailyValue.unit === 'g') {
-        adjustedValue = value / 1000; // Convert mg to g
-      } else if (unit === 'g' && dailyValue.unit === 'µg') {
-        adjustedValue = value * 1000000; // Convert g to µg
-      } else if (unit === 'mg' && dailyValue.unit === 'µg') {
-        adjustedValue = value * 1000; // Convert mg to µg
-      } else if (unit === 'µg' && dailyValue.unit === 'mg') {
-        adjustedValue = value / 1000; // Convert µg to mg
+      if (fetchError && fetchError.code !== 'PGRST116') { // PGRST116 is "not found"
+        throw fetchError;
       }
-    }
 
-    const percentage = (adjustedValue / dailyValue.amount) * 100;
-    return Math.round(percentage * 100) / 100;
-  };
+      // Get current date in MM/DD/YYYY format
+      const today = new Date();
+      const currentDate = `${String(today.getMonth() + 1).padStart(2, '0')}/${String(today.getDate()).padStart(2, '0')}/${today.getFullYear()}`;
 
-  // Component for nutrition row with progress bar
-  const NutritionRow = ({ label, value, unit, nutrient, showProgress = true }) => {
-    // Convert units for better display (e.g., g to mg for vitamins/minerals)
-    let displayValue = value;
-    let displayUnit = unit;
-    
-    // Convert very small gram values to milligrams for better readability
-    if (unit === 'g' && value < 1 && ['calcium', 'iron', 'vitamin-c', 'sodium', 'potassium', 'vitamin-a', 'vitamin-b12', 'vitamin-b2', 'vitamin-d'].includes(nutrient)) {
-      displayValue = Math.round(value * 1000 * 100) / 100; // Convert g to mg with 2 decimal places
-      displayUnit = 'mg';
-    }
-    
-    // Convert very small milligram values to micrograms for vitamins
-    if (unit === 'g' && value < 0.001 && ['vitamin-b12', 'vitamin-d', 'vitamin-a'].includes(nutrient)) {
-      displayValue = Math.round(value * 1000000 * 100) / 100; // Convert g to µg
-      displayUnit = 'µg';
-    } else if (displayUnit === 'mg' && displayValue < 1 && ['vitamin-b12', 'vitamin-d', 'vitamin-a'].includes(nutrient)) {
-      displayValue = Math.round(displayValue * 1000 * 100) / 100; // Convert mg to µg
-      displayUnit = 'µg';
-    }
-    
-    const dailyValue = getDailyValue(nutrient, displayValue, displayUnit);
-    
-    return (
-      <div className="space-y-2">
-        <div className="flex justify-between items-center">
-          <span className="text-sm font-medium">{label}</span>
-          <div className="text-right">
-            <span className="text-sm font-semibold">{displayValue}{displayUnit}</span>
-            {dailyValue && (
-              <div className="text-xs text-muted-foreground">
-                {dailyValue}% DV
-              </div>
-            )}
-          </div>
-        </div>
-        {showProgress && dailyValue && (
-          <Progress 
-            value={Math.min(dailyValue, 100)} 
-            className="h-1.5"
-          />
-        )}
-      </div>
-    );
-  };
+      // Prepare food consumption data
+      const foodConsumption = {
+        source: productData.dataSource === 'usda' ? 'usda' : 'OFD',
+        id: productData.dataSource === 'usda' ? productData.fdcId.toString() : productData.code,
+        title: productData.product_name || 'Unknown Product',
+        kcal_per_100g: (productData.nutriments?.['energy-kcal_100g'] || productData.nutriments?.energy_kcal_100g || 0).toString(),
+        grams: gramsAmount
+      };
 
-  const handleSearch = () => {
-    
+      // Get existing foodConsumes array or initialize empty array
+      const existingFoodConsumes = currentUserData?.foodConsumes || [];
+      
+      // Find if there's already an entry for today
+      const todayEntryIndex = existingFoodConsumes.findIndex(entry => entry.date === currentDate);
+      
+      let updatedFoodConsumes;
+      if (todayEntryIndex !== -1) {
+        // Add to existing date entry
+        updatedFoodConsumes = [...existingFoodConsumes];
+        updatedFoodConsumes[todayEntryIndex] = {
+          ...updatedFoodConsumes[todayEntryIndex],
+          consumes: [...updatedFoodConsumes[todayEntryIndex].consumes, foodConsumption]
+        };
+      } else {
+        // Create new date entry and add to front (newest first)
+        const newDateEntry = {
+          date: currentDate,
+          consumes: [foodConsumption]
+        };
+        updatedFoodConsumes = [newDateEntry, ...existingFoodConsumes];
+      }
+
+      // Update the database
+      const { error: updateError } = await supabase
+        .from('userdatas')
+        .update({
+          foodConsumes: updatedFoodConsumes
+        })
+        .eq('user_id', user.id);
+
+      if (updateError) {
+        throw updateError;
+      }
+
+      // Success feedback
+      toast.success(`Added ${gramsAmount}g of ${productData.product_name} to your diet!`);
+      mediumHapticsImpact();
+      
+      // Reset form and close drawer
+      setGramsAmount("");
+      setDrawerOpen(false);
+      
+    } catch (error) {
+      console.error('Error adding food to diet:', error);
+      toast.error("Failed to add food to your diet. Please try again.");
+    } finally {
+      setAddingToInventory(false);
+    }
   };
 
   return (
@@ -302,34 +441,111 @@ export default function AddFoodPage() {
       )}
 
       {/* Product Information - Now using the separate component */}
-      <ProductInfoCard productData={productData} scanResult={scanResult} />
+      <ProductInfoCard productData={productData} scanResult={scanResult} bmr={getUserBMR(userData) || 2000} />
 
       {productData && (
         <div className="flex justify-center items-center sticky bottom-0 bg-background p-4 w-full rounded-t-3xl">
-          <Drawer>
+          <Drawer open={drawerOpen} onOpenChange={setDrawerOpen}>
             <DrawerTrigger asChild>
               <Button 
                 className="w-full"
                 size="lg"
               >
                 <Plus className="size-4 mr-2" />
-                Add to Inventory
+                Add to My Diet
               </Button>
             </DrawerTrigger>
             <DrawerContent>
               <DrawerHeader>
-                <DrawerTitle>Add to Inventory</DrawerTitle>
+                <DrawerTitle>Add to My Diet</DrawerTitle>
                 <DrawerDescription>
                   <p>
-                    Add the product to your inventory
+                    Specify how many grams you consumed
                   </p>
                 </DrawerDescription>
               </DrawerHeader>
-              <div className="p-4">
-
+              <div className="p-4 space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="grams">Amount (grams)</Label>
+                  <Input
+                    id="grams"
+                    type="number"
+                    placeholder="e.g. 100"
+                    value={gramsAmount}
+                    onChange={(e) => setGramsAmount(e.target.value)}
+                    min="0"
+                    step="0.1"
+                    className="text-lg"
+                  />
+                  {gramsAmount && parseFloat(gramsAmount) > 0 && (
+                    <div className="text-sm text-muted-foreground">
+                      <p>
+                        Calories: {Math.round((parseFloat(gramsAmount) * (productData.nutriments?.['energy-kcal_100g'] || productData.nutriments?.energy_kcal_100g || 0)) / 100)} kcal
+                      </p>
+                    </div>
+                  )}
+                </div>
+                {/* Product Summary */}
+                <Card className="bg-muted/50">
+                  <CardContent className="p-3">
+                    <div className="flex items-center gap-3">
+                      {productData.image_front_url && (
+                        <img 
+                          src={productData.image_front_url} 
+                          alt={productData.product_name}
+                          className="w-12 h-12 object-cover rounded-lg flex-shrink-0"
+                        />
+                      )}
+                      <div className="flex-1 min-w-0">
+                        <h4 className="font-medium text-sm leading-tight line-clamp-1">
+                          {productData.product_name}
+                        </h4>
+                        <p className="text-xs text-muted-foreground">
+                          {productData.brands}
+                        </p>
+                        <p className="text-xs text-muted-foreground">
+                          {Math.round(productData.nutriments?.['energy-kcal_100g'] || productData.nutriments?.energy_kcal_100g || 0)} kcal/100g
+                        </p>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
               </div>
-              <DrawerFooter>
-                <Button>Add to Inventory</Button>
+              <DrawerFooter className="pb-0">
+                <Button 
+                  className="w-full"
+                  onClick={addToMyDiet}
+                  disabled={addingToInventory || !gramsAmount || parseFloat(gramsAmount) <= 0}
+                >
+                  {addingToInventory ? (
+                    <>
+                      <Loader2 className="size-4 mr-2 animate-spin" />
+                      Adding to Diet...
+                    </>
+                  ) : (
+                    <>
+                      <CheckIcon className="size-4 mr-2" />
+                      Add to My Diet
+                    </>
+                  )}
+                </Button>
+                
+                {/* Safe area handling */}
+                <div className="flex flex-col">
+                  <MobileSafeAreaBottom />
+                  <motion.div
+                    className="w-full"
+                    initial={{ height: 0 }}
+                    animate={{ height: keyboardHeight }}
+                    exit={{ height: 0 }}
+                    transition={{
+                      type: "spring",
+                      stiffness: 100,
+                      damping: 10,
+                      mass: 0.5,
+                    }}
+                  />
+                </div>
               </DrawerFooter>
             </DrawerContent>
           </Drawer>
@@ -367,70 +583,173 @@ export default function AddFoodPage() {
                 <XIcon className="size-4 text-muted-foreground" /> Close
               </Button>
             </div>
-            <div className="flex flex-1 items-end justify-center">
-              <motion.div 
-                className="flex items-center px-2"
-                initial={{ scale: 0 }}
-                animate={{ scale: 1, width: searchValue.length > 0 ? "calc(100vw - 64px)" : "calc(100vw - 128px)" }}
-                exit={{ scale: 0 }}
-                transition={{
-                  type: "spring",
-                  stiffness: 300,
-                  damping: 20,
-                  mass: 0.8,
-                }}
-              >
-                <Input
-                  placeholder="Search"
-                  value={searchValue}
-                  onChange={(e) => setSearchValue(e.target.value)}
-                  onFocus={()=>{
-                    setSearchFocused(true);
-                  }}
-                  onBlur={()=>{
-                    setSearchFocused(false);
-                  }}
-                  className={cn("p-6 rounded-full")}
-                />
-              </motion.div>
+            <div className="flex flex-col items-center justify-start flex-1 w-full overflow-y-auto mt-4 rounded-t-3xl">
+              {/* search results */}
+              {searchLoading && (
+                <div className="flex items-center justify-center py-8">
+                  <Loader2 className="animate-spin mr-2" />
+                  <span>Searching...</span>
+                </div>
+              )}
+              
+              {!searchLoading && searchResults.length > 0 && lastSearchKeyword === searchValue && (
+                <div className="w-full space-y-3 py-4 px-4">
+                  {searchResults.map((product) => (
+                    <Card 
+                      key={product.code} 
+                      className="w-full cursor-pointer bg-background/70 hover:bg-accent/50 transition-colors backdrop-blur-sm"
+                      onClick={() => selectProduct(product)}
+                    >
+                      <CardContent className="p-4">
+                        <div className="flex items-start gap-3">
+                          {product.image_front_url && (
+                            <img 
+                              src={product.image_front_url} 
+                              alt={product.product_name}
+                              className="w-16 h-16 object-cover rounded-lg flex-shrink-0"
+                            />
+                          )}
+                          <div className="flex-1 min-w-0">
+                            <h3 className="font-semibold text-sm leading-tight mb-1 line-clamp-2">
+                              {product.product_name || 'Unknown Product'}
+                            </h3>
+                            {product.brands && (
+                              <p className="text-xs text-muted-foreground mb-2">
+                                {product.brands}
+                              </p>
+                            )}
+                            <div className="flex items-center gap-2 flex-wrap">
+                              {/* Data source indicator */}
+                              <Badge 
+                                variant="outline" 
+                                className={cn(
+                                  "text-xs px-2 py-0.5",
+                                  product.dataSource === 'usda' ? "bg-blue-50 text-blue-700 border-blue-200" : "bg-green-50 text-green-700 border-green-200"
+                                )}
+                              >
+                                {product.dataSource === 'usda' ? '🇺🇸 USDA' : '🌍 OpenFoodFacts'}
+                              </Badge>
+                              {product.nutrition_grades && (
+                                <Badge 
+                                  variant="outline" 
+                                  className={cn(
+                                    "text-xs px-2 py-0.5",
+                                    product.nutrition_grades === 'a' && "bg-green-100 text-green-800 border-green-200",
+                                    product.nutrition_grades === 'b' && "bg-lime-100 text-lime-800 border-lime-200",
+                                    product.nutrition_grades === 'c' && "bg-yellow-100 text-yellow-800 border-yellow-200",
+                                    product.nutrition_grades === 'd' && "bg-orange-100 text-orange-800 border-orange-200",
+                                    product.nutrition_grades === 'e' && "bg-red-100 text-red-800 border-red-200"
+                                  )}
+                                >
+                                  Nutri-Score {product.nutrition_grades?.toUpperCase()}
+                                </Badge>
+                              )}
+                              {(product.nutriments?.['energy-kcal_100g'] || product.nutriments?.energy_kcal_100g) && (
+                                <Badge variant="secondary" className="text-xs">
+                                  {Math.round(product.nutriments['energy-kcal_100g'] || product.nutriments.energy_kcal_100g)} kcal/100g
+                                </Badge>
+                              )}
+                            </div>
+                          </div>
+                          <ArrowRightIcon className="w-4 h-4 text-muted-foreground flex-shrink-0" />
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              )}
+              
+              {!searchLoading && searchValue.trim() && searchResults.length === 0 && lastSearchKeyword === searchValue && (
+                <div className="flex flex-col items-center justify-center py-8 text-center">
+                  <Package className="w-12 h-12 text-muted-foreground mb-4" />
+                  <p className="text-muted-foreground">No products found</p>
+                  <p className="text-sm text-muted-foreground">Try a different search term</p>
+                </div>
+              )}
+              
+              {!searchValue.trim() && !searchLoading && (
+                <div className="flex flex-col items-center justify-center py-8 text-center">
+                  <SearchIcon className="w-12 h-12 text-muted-foreground mb-4" />
+                  <p className="text-muted-foreground">Search for food products</p>
+                  <p className="text-sm text-muted-foreground">Enter a product name or brand</p>
+                </div>
+              )}
 
-              <AnimatePresence mode="wait">
-                {searchValue.length > 0 && (
-                  <motion.div 
-                    className={cn("flex flex-col items-center justify-center")}
-                    initial={{ opacity: 0, height: 0, width: 0, x: -64 }}
-                    animate={{ opacity: 1, height: 48, width: 48, x: 0 }}
-                    exit={{ opacity: 0, height: 0, width: 0, x: -64}}
-                    transition={{
-                      type: "spring",
-                      stiffness: 300,
-                      damping: 20,
-                      mass: 0.8,
-                    }}
-                  >
-                    <Button variant="outline" className="size-10 rounded-full" onClick={()=>{
-
-                    }}>
-                      <CornerDownLeftIcon className={cn("size-4 text-muted-foreground", !searchValue.length > 0 && "rotate-180 size-0")} />
-                    </Button>
-                  </motion.div>
-                )}
-              </AnimatePresence>
+              {!searchLoading && searchValue.trim() && searchResults.length > 0 && lastSearchKeyword !== searchValue && (
+                <div className="flex flex-col items-center justify-center py-8 text-center">
+                  <CornerDownLeftIcon className="w-12 h-12 text-muted-foreground mb-4" />
+                  <p className="text-muted-foreground">Press the search button to search for products</p>
+                </div>
+              )}
             </div>
-            <MobileSafeAreaBottom />
-            <motion.div
-              className="w-full"
-              initial={{ height: 0 }}
-              animate={{ height: keyboardHeight }}
-              exit={{ height: 0 }}
-              transition={{
-                type: "spring",
-                stiffness: 100,
-                damping: 10,
-                mass: 0.5,
-              }}
-            >
-            </motion.div>
+            <div className="flex flex-col items-center justify-center fixed bottom-0 left-0 w-full">
+              <div className="flex items-end justify-center">
+                <motion.div 
+                  className="flex items-center px-2"
+                  initial={{ scale: 0 }}
+                  animate={{ scale: 1, width: searchValue.length > 0 ? "calc(100vw - 64px)" : "calc(100vw - 128px)" }}
+                  exit={{ scale: 0 }}
+                  transition={{
+                    type: "spring",
+                    stiffness: 300,
+                    damping: 20,
+                    mass: 0.8,
+                  }}
+                >
+                  <Input
+                    placeholder="Search"
+                    value={searchValue}
+                    onChange={(e) => setSearchValue(e.target.value)}
+                    onFocus={()=>{
+                      setSearchFocused(true);
+                    }}
+                    onBlur={()=>{
+                      setSearchFocused(false);
+                    }}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        handleSearch();
+                      }
+                    }}
+                    className={cn("p-6 rounded-full")}
+                  />
+                </motion.div>
+
+                <AnimatePresence mode="wait">
+                  {searchValue.length > 0 && (
+                    <motion.div 
+                      className={cn("flex flex-col items-center justify-center")}
+                      initial={{ opacity: 0, height: 0, width: 0, x: -64 }}
+                      animate={{ opacity: 1, height: 48, width: 48, x: 0 }}
+                      exit={{ opacity: 0, height: 0, width: 0, x: -64}}
+                      transition={{
+                        type: "spring",
+                        stiffness: 300,
+                        damping: 20,
+                        mass: 0.8,
+                      }}
+                    >
+                      <Button variant="outline" className="size-10 rounded-full" onClick={handleSearch}>
+                        <CornerDownLeftIcon className={cn("size-4 text-muted-foreground", !searchValue.length > 0 && "rotate-180 size-0")} />
+                      </Button>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
+                <MobileSafeAreaBottom />
+                <motion.div
+                  className="w-full"
+                  initial={{ height: 0 }}
+                  animate={{ height: keyboardHeight }}
+                  exit={{ height: 0 }}
+                  transition={{
+                    type: "spring",
+                    stiffness: 100,
+                    damping: 10,
+                    mass: 0.5,
+                  }}
+                />
+            </div>
           </motion.div>
         )}
       </AnimatePresence>

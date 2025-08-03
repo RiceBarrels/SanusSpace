@@ -21,8 +21,8 @@ const config: CapacitorConfig = {
     iosScheme: 'sanusspace',
     allowNavigation: ['jsxixsqrvxqptdunnqis.supabase.co'],
     cleartext: true,
-    // hostname: 'app' // for production
-    url: 'http://192.168.1.108:3000' // for testing with local server
+    // hostname: 'app' // for production 
+    url: 'http://192.168.150.177:3000' // for testing with local server
   },
 };
 

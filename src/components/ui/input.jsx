@@ -6,6 +6,8 @@ import { lightHapticsImpact } from "@/lib/haptics"
 function Input({
   className,
   type,
+  onFocus,
+  onBlur,
   haptics = true,
   ...props
 }) {
@@ -23,11 +25,13 @@ function Input({
         if (haptics) {
           lightHapticsImpact();
         }
+        onFocus?.();
       }}
       onBlur={() => {
         if (haptics) {
           lightHapticsImpact();
         }
+        onBlur?.();
       }}
       {...props} />
   );

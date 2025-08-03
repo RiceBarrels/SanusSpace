@@ -50,7 +50,7 @@ export function MobileSafeAreaTop({className}) {
             className={cn("w-full flex justify-center items-center", className)} 
             style={{ height: `${safeArea.top}px` }}
         >
-            {Capacitor.getPlatform() === 'ios' && <b className="text-[0.6rem] text-foreground/50 font-black bg-background/80 px-2 py-0.5 rounded-full">SanusSpace.</b>}
+            {Capacitor.getPlatform() === 'ios' && <b className="text-[0.6rem] text-foreground/50 font-black bg-background/80 px-2 py-0.5 rounded-full fixed top-6 left-[calc(50vw-3rem)] w-24 text-center z-50">SanusSpace.</b>}
         </div>
     );
 }

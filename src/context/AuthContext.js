@@ -10,6 +10,7 @@ const AuthContext = createContext({})
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null)
+  const [userData, setUserData] = useState(null)
   const [loading, setLoading] = useState(true)
   const router = useRouter()
   const isNative = Capacitor.isNativePlatform()
@@ -20,6 +21,8 @@ export const AuthProvider = ({ children }) => {
       try {
         const { data: { session } } = await supabase.auth.getSession()
         setUser(session?.user ?? null)
+        const { data: { userdata } } = await supabase.from('userdatas').select('*').eq('user_id', session?.user?.id).single()
+        setUserData(userdata ?? null)
       } catch (error) {
         console.error('Error getting session:', error)
       } finally {
@@ -221,6 +224,7 @@ export const AuthProvider = ({ children }) => {
         .single();
     },
     user,
+    userData,
     loading,
   }
 

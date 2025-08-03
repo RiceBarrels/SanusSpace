@@ -39,11 +39,32 @@ export default function Widgets({variant, isEditing, className = "", onDelete, s
   const [stepsData, setStepsData] = useState(null);
   const [userData, setUserData] = useState(null);
   const [loading, setLoading] = useState(false);
-  const [isHoveringClose, setIsHoveringClose] = useState(false)
+  const [isHoveringClose, setIsHoveringClose] = useState(false);
+  const [consumedCalories, setConsumedCalories] = useState(0);
   const isNativeIos = Capacitor.getPlatform() === 'ios'
   
   // Calculate BMR when userData is available
   const bmr = userData ? getUserBMR(userData) : 0;
+
+  // Calculate today's consumed calories from foodConsumes data
+  const calculateTodaysConsumedCalories = (userData) => {
+    if (!userData?.foodConsumes) return 0;
+    
+    // Get today's date in MM/DD/YYYY format
+    const today = new Date();
+    const todayDate = `${String(today.getMonth() + 1).padStart(2, '0')}/${String(today.getDate()).padStart(2, '0')}/${today.getFullYear()}`;
+    
+    // Find today's food consumption entry
+    const todayEntry = userData.foodConsumes.find(entry => entry.date === todayDate);
+    if (!todayEntry?.consumes) return 0;
+    
+    // Calculate total calories consumed today
+    return todayEntry.consumes.reduce((total, food) => {
+      const kcalPer100g = parseFloat(food.kcal_per_100g) || 0;
+      const grams = parseFloat(food.grams) || 0;
+      return total + (kcalPer100g * grams / 100);
+    }, 0);
+  };
 
   // Fetch user data on component mount
   useEffect(() => {
@@ -51,6 +72,12 @@ export default function Widgets({variant, isEditing, className = "", onDelete, s
       try {
         const { data } = await getUserData();
         setUserData(data);
+        
+        // Calculate consumed calories when user data is available
+        if (data) {
+          const todaysConsumed = calculateTodaysConsumedCalories(data);
+          setConsumedCalories(todaysConsumed);
+        }
       } catch (error) {
         console.error("Error fetching user data:", error);
       }
@@ -58,6 +85,14 @@ export default function Widgets({variant, isEditing, className = "", onDelete, s
 
     fetchUserData();
   }, [getUserData]);
+
+  // Update consumed calories when userData changes or for calories widget
+  useEffect(() => {
+    if (userData && (variant === 2 || variant === "caloriesTracker")) {
+      const todaysConsumed = calculateTodaysConsumedCalories(userData);
+      setConsumedCalories(todaysConsumed);
+    }
+  }, [userData, variant]);
 
   // Add haptic feedback when dragging starts
   useEffect(() => {
@@ -488,7 +523,7 @@ export default function Widgets({variant, isEditing, className = "", onDelete, s
                                 
                                 <div className="flex flex-col items-center">
                                     <div className="text-2xl font-bold text-gray-950/80">
-                                        {Math.round(totalCaloriesSpent)}
+                                        {Math.round(consumedCalories)}
                                     </div>
                                     <div className="text-xs text-gray-950/60 font-medium">Consumed</div>
                                 </div>
@@ -497,11 +532,11 @@ export default function Widgets({variant, isEditing, className = "", onDelete, s
                             // Large size: Show detailed breakdown with icons
                             <div className="flex flex-col justify-center items-center w-full h-full gap-4">
                                 <div className="flex justify-around items-center w-full">
-                                    {/* Total Calories Spent */}
+                                    {/* Total Calories Burned */}
                                     <div className="flex flex-col items-center bg-amber-50/20 rounded-xl w-32 h-18 justify-center">
                                         <div className="text-3xl font-bold text-gray-950/80">
                                             {(Math.round((totalCaloriesSpent + bmr)*10)/10).toString().split(".")[0]}
-                                            <small className="text-sm text-gray-950/80">.{(Math.round(totalCaloriesSpent*10)/10).toString().split(".")[1] || "0"}</small>
+                                            <small className="text-sm text-gray-950/80">.{(Math.round((totalCaloriesSpent + bmr)*10)/10).toString().split(".")[1] || "0"}</small>
                                         </div>
                                         <MinusIcon className="size-3 stroke-[4] text-cal/70" />
                                     </div>
@@ -509,8 +544,8 @@ export default function Widgets({variant, isEditing, className = "", onDelete, s
                                     {/* Total Calories Consumed */}
                                     <div className="flex flex-col items-center bg-amber-50/20 rounded-xl w-32 h-18 justify-center">
                                         <div className="text-3xl font-bold text-gray-950/80">
-                                            {(Math.round(totalCaloriesSpent*10)/10).toString().split(".")[0]}
-                                            <small className="text-sm text-gray-950/80">.{(Math.round(totalCaloriesSpent*10)/10).toString().split(".")[1] || "0"}</small>
+                                            {(Math.round(consumedCalories*10)/10).toString().split(".")[0]}
+                                            <small className="text-sm text-gray-950/80">.{(Math.round(consumedCalories*10)/10).toString().split(".")[1] || "0"}</small>
                                         </div>
                                         <PlusIcon className="size-3 stroke-[4] text-cal/70" />
                                     </div>
@@ -519,7 +554,7 @@ export default function Widgets({variant, isEditing, className = "", onDelete, s
                                 {/* Net calories */}
                                 <div className="flex flex-col items-center">
                                     <div className="text-lg font-bold text-gray-950/60">
-                                        Net: {Math.round(bmr)} cal
+                                        Net: {Math.round(consumedCalories - (totalCaloriesSpent + bmr))} cal
                                     </div>
                                     <div className="text-xs text-gray-950/40">Deficit Goal: 500 cal</div>
                                 </div>

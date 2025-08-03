@@ -25,7 +25,7 @@ export default function Home() {
   const [isHealthKitAuthorized, setIsHealthKitAuthorized] = useState(false);
   const isNative = Capacitor.isNativePlatform();
   const timeOfDay = getTimeOfDay();
-  const { prefetchRoute, prefetchContent } = usePrefetch();
+  const { prefetchRoute } = usePrefetch();
 
   const loadUserData = async () => {
     try {
@@ -104,31 +104,35 @@ export default function Home() {
   }, [prefetchRoute]);
 
   // Example of prefetching API content without navigation
-  useEffect(() => {
-    const prefetchApiData = async () => {
-      // This loads content but doesn't navigate to it
-      try {
-        // Example: prefetch user's health data
-        const healthData = await prefetchContent('/api/health-summary');
-        if (healthData) {
-          console.log('Prefetched health data:', healthData);
-          // You can store this in state for later use
-        }
+  // useEffect(() => {
+  //   const prefetchApiData = async () => {
+  //     // This loads content but doesn't navigate to it
+  //     try {
+  //       // Example: prefetch user's health data
+  //       const healthData = await prefetchContent('/api/health-summary');
+  //       if (healthData) {
+  //         console.log('Prefetched health data:', healthData);
+  //         // You can store this in state for later use
+  //       }
         
-        // Example: prefetch settings data
-        const settingsData = await prefetchContent('/api/user-settings');
-        if (settingsData) {
-          console.log('Prefetched settings data:', settingsData);
-        }
-      } catch (error) {
-        console.error('Failed to prefetch API data:', error);
-      }
-    };
+  //       // Example: prefetch settings data
+  //       const settingsData = await prefetchContent('/api/user-settings');
+  //       if (settingsData) {
+  //         console.log('Prefetched settings data:', settingsData);
+  //       }
+  //     } catch (error) {
+  //       console.error('Failed to prefetch API data:', error);
+  //     }
+  //   };
 
-    if (userData && !loading) {
-      prefetchApiData();
-    }
-  }, [userData, loading, prefetchContent]);
+  //   if (userData && !loading) {
+  //     prefetchApiData();
+  //   }
+  // }, [userData, loading, prefetchContent]);
+
+  useEffect(() => {
+    sessionStorage.setItem('lastPage', '/home');
+  }, []);
 
   return (
     <div className="bg-background">

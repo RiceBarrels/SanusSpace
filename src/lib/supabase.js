@@ -26,7 +26,7 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   },
   global: {
     headers: {
-      'X-Client-Info': 'sanussapce-app'
+      'X-Client-Info': 'sanusspace-app'
     }
   },
   db: {

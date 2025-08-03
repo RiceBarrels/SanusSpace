@@ -7,8 +7,6 @@ import { doubleHapticsImpact } from "@/lib/haptics";
 
 export default function ForwardLink({href="", children, haptics=true, ...prop}){
   const router = useTransitionRouter();
-  const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
-  const isIos = Capacitor.getPlatform() === 'ios';
 
   return (
     <Link 
@@ -19,7 +17,7 @@ export default function ForwardLink({href="", children, haptics=true, ...prop}){
           doubleHapticsImpact();
         }
         router.push(href, {
-          onTransitionReady: () => pageAnimation(isSafari,isIos),
+          onTransitionReady: () => pageAnimation(),
         });
       }}
       {...prop}
@@ -28,7 +26,7 @@ export default function ForwardLink({href="", children, haptics=true, ...prop}){
     </Link>
   )
 }
-function pageAnimation(isSafari,isIos){
+function pageAnimation(){
     document.documentElement.animate(
       [
         {
@@ -56,12 +54,12 @@ function pageAnimation(isSafari,isIos){
       [
         {
           zIndex: 2,
-          transform: `translate(calc(100%${isSafari || isIos ? " + 12px":""}), ${isSafari || isIos ? 12 : 0}px)`,
+          transform: `translate(100%, 0)`,
           borderRadius: 0,
         },
         {
           zIndex: 2,
-          transform: `translate(${isSafari || isIos ? 12 : 0}, ${isSafari || isIos ? 12 : 0})`,
+          transform: `translate(0, 0)`,
           borderRadius: 32,
         },
       ],
